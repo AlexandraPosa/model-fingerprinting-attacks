@@ -1,5 +1,4 @@
 import numpy as np
-import pandas as pd
 import random
 import sys
 import json
@@ -15,43 +14,20 @@ from keras.optimizers import SGD
 from keras.callbacks import ModelCheckpoint, LearningRateScheduler
 
 from watermark_regularizer_new import WatermarkRegularizer
-from watermark_regularizer_new import get_watermark_regularizers
 from watermark_regularizer_new import show_encoded_watermark
 
-# Set the seed value
+# Set a seed
 seed_value = 0
-
-# Set the seed for the random module
 random.seed(seed_value)
-
-# Set the seed for NumPy
 np.random.seed(seed_value)
-
-# Set the seed for TensorFlow
 tf.random.set_seed(seed_value)
-
-# Set the PythonHashSeed
 os.environ['PYTHONHASHSEED'] = str(seed_value)
 
 # Set the path
 RESULT_PATH = './result'
 MODEL_CHKPOINT_FNAME = os.path.join(RESULT_PATH, 'WRN-Weights.h5')
 
-def update_hdf5(fname, path, data):
-    store = pd.HDFStore(fname)
-
-    if path in store.keys():
-        store.remove(path)
-    store.append(path, data)
-    store.close()
-
-def save_watermark_signatures(prefix, model):
-    for layer_id, regularizer in get_watermark_regularizers(model):
-        fname_w = prefix + '_layer{}_w.npy'.format(layer_id)
-        fname_b = prefix + '_layer{}_b.npy'.format(layer_id)
-        np.save(fname_w, regularizer.get_matrix())
-        np.save(fname_b, regularizer.get_signature())
-
+# Set the learning rate
 lr_schedule = [60, 120, 160]  # epoch_step
 
 def schedule(epoch_idx):
@@ -104,15 +80,7 @@ if __name__ == '__main__':
     apply_penalty = train_settings['apply_penalty']
     N = train_settings['N']
     k = train_settings['k']
-
     target_blk_id = train_settings['target_blk_id']
-    base_modelw_fname = train_settings['base_modelw_fname']
-    wtype = train_settings['wmark_wtype']
-    randseed = train_settings['randseed'] if 'randseed' in train_settings else 'none'
-    ohist_fname = train_settings['history']
-    hist_hdf_path = 'WTYPE_{}/DIM{}/SCALE{}/N{}K{}B{}EPOCH{}/TBLK{}'.format(
-        wtype, embed_dim, scale, N, k, batch_size, nb_epoch, target_blk_id)
-    modelname_prefix = os.path.join(RESULT_PATH, 'wrn_' + hist_hdf_path.replace('/', '_'))
 
     # create model
     watermark_regularizer = WatermarkRegularizer(strength=scale, embed_dim=embed_dim, seed=seed_value,
@@ -125,13 +93,11 @@ if __name__ == '__main__':
     # training process
     sgd = SGD(lr=0.1, momentum=0.9, nesterov=True)
     model.compile(loss="categorical_crossentropy", optimizer=sgd, metrics=["accuracy"])
-    if len(base_modelw_fname) > 0:
-        model.load_weights(base_modelw_fname)
     print("Finished compiling")
 
     hist = \
     model.fit(generator.flow(trainX, trainY, batch_size=batch_size),
-              steps_per_epoch=np.ceil(len(trainX)/batch_size), epochs=nb_epoch,
+              steps_per_epoch=np.ceil(len(trainX)/batch_size), epochs=1,
               callbacks=[ModelCheckpoint(MODEL_CHKPOINT_FNAME, monitor="val_accuracy", save_best_only=True),
                          LearningRateScheduler(schedule=schedule)],
               validation_data=(testX, testY),
@@ -153,11 +119,3 @@ if __name__ == '__main__':
     error = 100 - accuracy
     print("Accuracy : ", accuracy)
     print("Error : ", error)
-
-    # write history and model parameters to file
-    update_hdf5(ohist_fname, hist_hdf_path, pd.DataFrame(hist.history))
-    model.save_weights(modelname_prefix + '.weight')
-
-    # write watermark matrix and embedded signature to file
-    if target_blk_id > 0:
-        save_watermark_signatures(modelname_prefix, model)

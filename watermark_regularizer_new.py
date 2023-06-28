@@ -50,17 +50,6 @@ class WatermarkRegularizer(tf.keras.regularizers.Regularizer):
     def get_config(self):
         return {'strength': self.strength}
 
-def get_watermark_regularizers(model):
-    return_list = []
-
-    for i, layer in enumerate(model.layers):
-        try:
-            if isinstance(layer.kernel_regularizer, WatermarkRegularizer):
-                return_list.append((i, layer.kernel_regularizer))
-        except AttributeError:
-            continue
-
-    return return_list
 
 
 def show_encoded_watermark(model):
@@ -77,8 +66,6 @@ def show_encoded_watermark(model):
                 proj_matrix = layer.kernel_regularizer.get_matrix()
 
                 # extract the watermark from the layer
-                #watermark = tf.sigmoid(tf.matmul(tf.constant(weights_flat, dtype=tf.float32),
-                #                                 tf.constant(proj_matrix, dtype=tf.float32)))
                 watermark = 1 / (1 + np.exp(-np.dot(weights_flat, proj_matrix)))
 
                 # print the watermark
