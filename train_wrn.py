@@ -13,10 +13,10 @@ from keras import backend as K
 from keras.optimizers import SGD
 from keras.callbacks import ModelCheckpoint, LearningRateScheduler
 
-from watermark_regularizer_new import WatermarkRegularizer
-from watermark_regularizer_new import show_encoded_watermark
+from custom_regularizer import CustomRegularizer
+from custom_regularizer import show_encoded_signature
 
-# Set a seed
+# Set the seed
 seed_value = 0
 random.seed(seed_value)
 np.random.seed(seed_value)
@@ -83,11 +83,11 @@ if __name__ == '__main__':
     target_blk_id = train_settings['target_blk_id']
 
     # create model
-    watermark_regularizer = WatermarkRegularizer(strength=scale, embed_dim=embed_dim, seed=seed_value,
-                                                 apply_penalty=apply_penalty)
+    fingerprint_embedding = CustomRegularizer(strength=scale, embed_dim=embed_dim, seed=seed_value,
+                                              apply_penalty=apply_penalty)
     init_shape = (3, 32, 32) if K.image_data_format() == "channels_first" else (32, 32, 3)
     model = wrn.create_wide_residual_network(init_shape, nb_classes=nb_classes, N=N, k=k, dropout=0.00,
-                                             wmark_regularizer=watermark_regularizer, target_blk_num=target_blk_id)
+                                             custom_regularizer=fingerprint_embedding, target_blk_num=target_blk_id)
     model.summary()
 
     # training process
@@ -97,17 +97,21 @@ if __name__ == '__main__':
 
     hist = \
     model.fit(generator.flow(trainX, trainY, batch_size=batch_size),
-              steps_per_epoch=np.ceil(len(trainX)/batch_size), epochs=1,
+              steps_per_epoch=np.ceil(len(trainX)/batch_size), epochs=nb_epoch,
               callbacks=[ModelCheckpoint(MODEL_CHKPOINT_FNAME, monitor="val_accuracy", save_best_only=True),
                          LearningRateScheduler(schedule=schedule)],
               validation_data=(testX, testY),
               validation_steps=np.ceil(len(testX)/batch_size))
 
-    # print the matrix used for the watermark embedding
-    print('\nWatermark projection matrix:\n', watermark_regularizer.get_matrix())
+    # print the keys used for the embedding
 
-    # print the watermark
-    show_encoded_watermark(model)
+    proj_matrix, ortho_matrix = fingerprint_embedding.get_matrix()
+    print('\nProjection matrix.\n{}\n \nOrthogonal matrix:\n{}\n'.format(proj_matrix, ortho_matrix))
+
+    signature, coefficient = fingerprint_embedding.get_signature()
+    print('\nSignature:\n{}\n \nCoeffients:\n{}\n'.format(signature, coefficient))
+
+    #show_encoded_signature(model)
 
     # validate training accuracy
     yPreds = model.predict(testX)

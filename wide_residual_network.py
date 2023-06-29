@@ -93,7 +93,8 @@ def conv3_block(input, k=1, dropout=0.0, regularizer=None):
     m = Add()([init, x])
     return m
 
-def create_wide_residual_network(input_dim, nb_classes=100, N=2, k=1, dropout=0.0, verbose=1, wmark_regularizer=None, target_blk_num=1):
+def create_wide_residual_network(input_dim, nb_classes=100, N=2, k=1, dropout=0.0, verbose=1,
+                                 custom_regularizer=None, target_blk_num=1):
     """
     Creates a Wide Residual Network with specified parameters
 
@@ -109,9 +110,9 @@ def create_wide_residual_network(input_dim, nb_classes=100, N=2, k=1, dropout=0.
     :return:
     """
     def get_regularizer(blk_num, idx):
-        if wmark_regularizer != None and target_blk_num == blk_num and idx == 0:
+        if custom_regularizer != None and target_blk_num == blk_num and idx == 0:
             print('target regularizer({}, {})'.format(blk_num, idx))
-            return wmark_regularizer
+            return custom_regularizer
         else:
             return None
 
