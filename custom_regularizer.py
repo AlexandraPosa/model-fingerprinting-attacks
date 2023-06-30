@@ -50,11 +50,11 @@ class CustomRegularizer(Regularizer):
         weights_flat = tf.reshape(weights_mean, (tf.size(weights_mean), 1))
 
         tf_fingerprint = tf.constant(fingerprint, dtype=tf.float32)
-        tf_proj_mat = tf.constant(self.proj_matrix, dtype=tf.float32)
+        tf_proj_matrix = tf.constant(self.proj_matrix, dtype=tf.float32)
 
         # compute the mean squared error
         regularized_loss = self.strength * tf.reduce_mean(tf.square(tf.subtract(
-            tf_fingerprint, tf.matmul(tf_proj_mat, weights_flat))))
+            tf_fingerprint, tf.matmul(tf_proj_matrix, weights_flat))))
 
         # apply a penalty to the loss function
         if self.apply_penalty:
@@ -81,28 +81,24 @@ def show_encoded_signature(model):
                 # retrieve the weights
                 weights = layer.get_weights()[0]
                 weights_mean = weights.mean(axis=3)
-                weights_flat = weights_mean.reshape(1, weights_mean.size)
+                weights_flat = weights_mean.reshape(weights_mean.size, 1)
 
-                # retrieve the projection matrix
-                proj_matrix = layer.kernel_regularizer.get_matrix()
+                # retrieve the projection matrix and the orthogonal matrix
+                proj_matrix, ortho_matrix = layer.kernel_regularizer.get_matrix()
 
-                # extract the watermark from the layer
-                watermark = 1 / (1 + np.exp(-np.dot(weights_flat, proj_matrix)))
+                # extract the fingerprint
+                #tf_proj_matrix = tf.constant(proj_matrix, dtype=tf.float32)
+                extract_fingerprint = np.dot(proj_matrix, weights_flat)
+
+                # extract the signature
+                #tf_ortho_matrix = tf.constant(ortho_matrix, dtype=tf.float32)
+                extract_coefficient = np.dot(extract_fingerprint.T, ortho_matrix)
+                extract_signature = 0.5 * (extract_coefficient + 1)
 
                 # print the signature
-                print('\nWatermark:')
-                print('Layer Index = {} \nClass = {} \n{}\n'.format(i, layer.__class__.__name__, watermark))
+                print('\nUser specific code-vector:')
+                print('Layer Index = {} \nClass = {} \n{}\n'.format(i, layer.__class__.__name__, extract_signature))
 
-                # compute confidence levels
-                confidence_levels = [0.5, 0.7, 0.8, 0.9]
-
-                for level in confidence_levels:
-                    confidence = (watermark > level).astype(int)
-                    ones = np.count_nonzero(confidence)
-                    zeros = confidence.size - ones
-
-                    print("Confidence level: {}%".format(int(level * 100)))
-                    print("Number of ones: {}\nNumber of zeros: {}\n{}\n".format(ones, zeros, confidence))
 
         except AttributeError:
             continue  # Continue the loop if the layer has no regularizers

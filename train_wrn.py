@@ -111,7 +111,7 @@ if __name__ == '__main__':
     signature, coefficient = fingerprint_embedding.get_signature()
     print('\nSignature:\n{}\n \nCoeffients:\n{}\n'.format(signature, coefficient))
 
-    #show_encoded_signature(model)
+    show_encoded_signature(model)
 
     # validate training accuracy
     yPreds = model.predict(testX)
