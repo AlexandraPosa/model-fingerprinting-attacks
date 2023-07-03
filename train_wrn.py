@@ -1,3 +1,4 @@
+# import libraries
 import numpy as np
 import random
 import sys
@@ -16,18 +17,18 @@ from keras.callbacks import ModelCheckpoint, LearningRateScheduler
 from custom_regularizer import CustomRegularizer
 from custom_regularizer import show_encoded_signature
 
-# Set the seed
+# set a seed
 seed_value = 0
 random.seed(seed_value)
 np.random.seed(seed_value)
 tf.random.set_seed(seed_value)
 os.environ['PYTHONHASHSEED'] = str(seed_value)
 
-# Set the path
+# set path
 RESULT_PATH = './result'
 MODEL_CHKPOINT_FNAME = os.path.join(RESULT_PATH, 'WRN-Weights.h5')
 
-# Set the learning rate
+# set learning rate
 lr_schedule = [60, 120, 160]  # epoch_step
 
 def schedule(epoch_idx):
