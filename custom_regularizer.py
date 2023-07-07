@@ -11,6 +11,7 @@ class CustomRegularizer(Regularizer):
         self.apply_penalty = apply_penalty
         self.signature = None
         self.coefficient = None
+        self.fingerprint = None
         self.proj_matrix = None
         self.orthogonal_matrix = None
 
@@ -21,9 +22,9 @@ class CustomRegularizer(Regularizer):
         np.random.seed(self.seed)
 
         # define the code vector
-        #self.signature = np.ones((self.embed_dim, 1))
-        self.signature = np.random.randint(0, 2, size=self.embed_dim)
-        self.signature = self.signature.reshape(self.embed_dim, 1)
+        self.signature = np.ones((self.embed_dim, 1))
+        #self.signature = np.random.randint(0, 2, size=self.embed_dim)
+        #self.signature = self.signature.reshape(self.embed_dim, 1)
 
         # compute the linear mapping
         self.coefficient = 2 * self.signature - 1
@@ -40,7 +41,7 @@ class CustomRegularizer(Regularizer):
             raise ValueError('Matrix is not orthogonal')
 
         # apply a basis transformation to the code vector
-        fingerprint = np.dot(self.orthogonal_matrix, self.coefficient)
+        self.fingerprint = np.dot(self.orthogonal_matrix, self.coefficient)
 
         # build the projection matrix for the watermark embedding
         mat_cols = np.prod(weights.shape[0:3])
@@ -51,7 +52,7 @@ class CustomRegularizer(Regularizer):
         weights_mean = tf.reduce_mean(weights, axis=3)
         weights_flat = tf.reshape(weights_mean, (tf.size(weights_mean), 1))
 
-        tf_fingerprint = tf.constant(fingerprint, dtype=tf.float32)
+        tf_fingerprint = tf.constant(self.fingerprint, dtype=tf.float32)
         tf_proj_matrix = tf.constant(self.proj_matrix, dtype=tf.float32)
 
         # compute the mean squared error
@@ -68,7 +69,7 @@ class CustomRegularizer(Regularizer):
         return self.proj_matrix, self.orthogonal_matrix
 
     def get_signature(self):
-        return self.signature.reshape(self.embed_dim,), self.coefficient.reshape(self.embed_dim,)
+        return np.squeeze(self.signature), np.squeeze(self.coefficient), np.squeeze(self.fingerprint)
 
     def get_config(self):
         return {'strength': self.strength}
@@ -89,18 +90,22 @@ def show_encoded_signature(model):
                 proj_matrix, ortho_matrix = layer.kernel_regularizer.get_matrix()
 
                 # extract the fingerprint
-                #tf_proj_matrix = tf.constant(proj_matrix, dtype=tf.float32)
                 extract_fingerprint = np.dot(proj_matrix, weights_flat)
 
                 # extract the signature
-                #tf_ortho_matrix = tf.constant(ortho_matrix, dtype=tf.float32)
                 extract_coefficient = np.dot(extract_fingerprint.T, ortho_matrix)
                 extract_signature = 0.5 * (extract_coefficient + 1)
 
-                # print the signature
+                # print the extracted signature
                 print('\nUser specific code-vector:')
-                print('Layer Index = {} \nClass = {} \n{}\n'.format(i, layer.__class__.__name__, extract_signature))
+                print('Layer Index = {} \nClass = {} \n{}\n'.format(i, layer.__class__.__name__,
+                                                                    np.squeeze(extract_signature)))
 
+                # print the extracted fingerprint
+                extract_fingerprint = np.squeeze(extract_fingerprint)
+                _, _, embed_fingerprint = layer.kernel_regularizer.get_signature()
+                print('\nExtracted fingerprint:\n{}\n \nError margin:\n{}\n'.format(
+                    extract_fingerprint, embed_fingerprint - extract_fingerprint))
 
         except AttributeError:
             continue  # Continue the loop if the layer has no regularizers

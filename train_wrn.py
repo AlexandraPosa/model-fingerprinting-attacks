@@ -109,8 +109,8 @@ if __name__ == '__main__':
     proj_matrix, ortho_matrix = fingerprint_embedding.get_matrix()
     print('\nProjection matrix.\n{}\n \nOrthogonal matrix:\n{}\n'.format(proj_matrix, ortho_matrix))
 
-    signature, coefficient = fingerprint_embedding.get_signature()
-    print('\nSignature:\n{}\n \nCoeffients:\n{}\n'.format(signature, coefficient))
+    signature, coefficient, fingerprint = fingerprint_embedding.get_signature()
+    print('\nSignature:\n{}\n \nCoeffients:\n{}\n \nEmbedded fingerprint:\n{}\n'.format(signature, coefficient, fingerprint))
 
     show_encoded_signature(model)
 
