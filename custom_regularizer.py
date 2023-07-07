@@ -30,7 +30,7 @@ class CustomRegularizer(Regularizer):
         self.coefficient = 2 * self.signature - 1
 
         # build the orthogonal matrix:
-        aux_matrix = np.random.rand(self.embed_dim, self.embed_dim)
+        aux_matrix = np.random.randn(self.embed_dim, self.embed_dim)
         self.orthogonal_matrix, _ = np.linalg.qr(aux_matrix)             # Perform QR decomposition
 
         # test the orthogonality of the matrix
