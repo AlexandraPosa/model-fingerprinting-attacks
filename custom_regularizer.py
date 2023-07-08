@@ -22,9 +22,9 @@ class CustomRegularizer(Regularizer):
         np.random.seed(self.seed)
 
         # define the code vector
-        self.signature = np.ones((self.embed_dim, 1))
-        #self.signature = np.random.randint(0, 2, size=self.embed_dim)
-        #self.signature = self.signature.reshape(self.embed_dim, 1)
+        #self.signature = np.ones((self.embed_dim, 1))
+        self.signature = np.random.randint(0, 2, size=self.embed_dim)
+        self.signature = self.signature.reshape(self.embed_dim, 1)
 
         # compute the linear mapping
         self.coefficient = 2 * self.signature - 1
