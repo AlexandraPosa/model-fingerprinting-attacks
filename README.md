@@ -6,7 +6,7 @@ Rights Management of Deep Learning Models" [2]. It embeds a digital fingerprint 
 This README will be updated later for more details.
 
 ## Requirements
-Tensorflow 2.12.0 (>2.0.0), numpy, matplotlib, pandas
+Tensorflow 2.12.0, numpy, matplotlib, scikit-learn, pandas
 
 ## Usage
 Embed a watermark in training a host network:
