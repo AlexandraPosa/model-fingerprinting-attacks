@@ -3,9 +3,9 @@ Embedding Fingerprints into Deep Neural Networks
 Implementing concepts from two research papers, specifically "Embedding Watermarks into Deep Neural Networks" [1] 
 and "DeepMarks: A Secure Fingerprinting Framework for Digital Rights Management of Deep Learning Models" [2], 
 the code embeds a digital fingerprint into a wide residual network  throughout the training process. 
-The embedding is achieved by a parameter regularizer.
+The embedding is achieved by applying a parameter regularizer to the target layer.
 
-The code has been revised to accommodate Tensorflow version 2.12.0. 
+The code has been revised to accommodate TensorFlow version 2.12.0. 
 For further reference, you can access the original project through the following link: https://github.com/yu4u/dnn-watermark
 
 ## Requirements
