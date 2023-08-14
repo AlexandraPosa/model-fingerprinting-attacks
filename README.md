@@ -9,7 +9,7 @@ Scikit-learn 1.2.2 \
 Numpy 1.23.5
 
 ## Usage
-Embed a watermark in training a host network:
+Embed a fingerprint in training a host network:
 
 ```sh
 python train_wrn.py config/train_random_min.json
@@ -21,7 +21,7 @@ Train the host network *without* embedding:
 python train_wrn.py config/train_non_min.json 
 ```
 
-Extracted watermarks from the embedded host network and the non-embedded network:
+Extracted fingerprints from the embedded host network and the non-embedded network:
 
 ![](images/fingerprint.png)
 
@@ -31,6 +31,6 @@ When using any code in this project, we would appreciate it if you could refer t
 
 
 ## References
-[1] Y. Uchida, Y. Nagai, S. Sakazawa, and S. Satoh, "Embedding Watermarks into Deep Neural Networks", ICMR, 2017.
+[1] Y. Uchida, Y. Nagai, S. Sakazawa, and S. Satoh, "Embedding Watermarks into Deep Neural Networks", ICMR, 2017. \
 [2] Huili Chen, Bita Darvish Rouhani, Cheng Fu, Jishen Zhao, and Farinaz Koushanfar, "DeepMarks: A Secure Fingerprinting 
     Framework for Digital Rights Management of Deep Learning Models", ICMR, 2019
