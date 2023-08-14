@@ -1,15 +1,21 @@
 Embedding Fingerprints into Deep Neural Networks
 ====
-This code is the implementation of "Embedding Watermarks into Deep Neural Networks" [1] and of "DeepMarks: A Secure Fingerprinting Framework for Digital
-Rights Management of Deep Learning Models" [2]. It embeds a digital fingerprint into deep neural networks in training the host network. This embedding is achieved by a parameter regularizer.
+Implementing concepts from two research papers, specifically "Embedding Watermarks into Deep Neural Networks" [1] 
+and "DeepMarks: A Secure Fingerprinting Framework for Digital Rights Management of Deep Learning Models" [2], 
+the code embeds a digital fingerprint into a wide residual network  throughout the training process. 
+The embedding is achieved by a parameter regularizer.
+
+The code has been revised to accommodate Tensorflow version 2.12.0. 
+For further reference, you can access the original project through the following link: https://github.com/yu4u/dnn-watermark
 
 ## Requirements
-Tensorflow 2.12.0 \
-Scikit-learn 1.2.2 \
-Numpy 1.23.5
+```sh
+pip install tensorflow == 2.12.0 
+pip install scikit-learn == 1.2.2 
+```
 
 ## Usage
-Embed a fingerprint in training a host network:
+Embed the fingerprint during the training phase of the host network:
 
 ```sh
 python train_wrn.py config/train_random_min.json
