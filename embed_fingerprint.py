@@ -72,7 +72,12 @@ class CustomRegularizer(Regularizer):
         return np.squeeze(self.signature), np.squeeze(self.coefficient), np.squeeze(self.fingerprint)
 
     def get_config(self):
-        return {'strength': self.strength}
+        return {
+            'strength': self.strength,
+            'embed_dim': self.embed_dim,
+            'apply_penalty': self.apply_penalty,
+            'seed': self.seed
+        }
 
 
 

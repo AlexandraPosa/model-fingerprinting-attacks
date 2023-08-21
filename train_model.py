@@ -4,6 +4,7 @@ import random
 import sys
 import json
 import os
+import h5py
 import tensorflow as tf
 import sklearn.metrics as metrics
 import wide_residual_network as wrn
@@ -14,8 +15,8 @@ from keras import backend as K
 from keras.optimizers import SGD
 from keras.callbacks import ModelCheckpoint, LearningRateScheduler
 
-from custom_regularizer import CustomRegularizer
-from custom_regularizer import show_encoded_signature
+from embed_fingerprint import CustomRegularizer
+from embed_fingerprint import show_encoded_signature
 
 # set a seed
 seed_value = 0
@@ -24,9 +25,11 @@ np.random.seed(seed_value)
 tf.random.set_seed(seed_value)
 os.environ['PYTHONHASHSEED'] = str(seed_value)
 
-# set path
-RESULT_PATH = './result'
-MODEL_CHKPOINT_FNAME = os.path.join(RESULT_PATH, 'WRN-Weights.h5')
+# set paths
+result_path = './result'
+hdf5_filepath = os.path.join(result_path, 'validation_data.h5')
+model_filepath = os.path.join(result_path, 'wrn_model.keras')
+model_checkpoint_fname = os.path.join(result_path, 'wrn_weights.h5')
 
 # set learning rate
 lr_schedule = [60, 120, 160]  # epoch_step
@@ -44,8 +47,8 @@ if __name__ == '__main__':
     settings_json_fname = sys.argv[1]
     train_settings = json.load(open(settings_json_fname))
     
-    if not os.path.isdir(RESULT_PATH):
-        os.makedirs(RESULT_PATH)
+    if not os.path.isdir(result_path):
+        os.makedirs(result_path)
         
     # load dataset and fitting data for learning
     if train_settings['dataset'] == 'cifar10':
@@ -99,7 +102,7 @@ if __name__ == '__main__':
     hist = \
     model.fit(generator.flow(trainX, trainY, batch_size=batch_size),
               steps_per_epoch=np.ceil(len(trainX)/batch_size), epochs=nb_epoch,
-              callbacks=[ModelCheckpoint(MODEL_CHKPOINT_FNAME, monitor="val_accuracy", save_best_only=True),
+              callbacks=[ModelCheckpoint(model_checkpoint_fname, monitor="val_accuracy", save_best_only=True),
                          LearningRateScheduler(schedule=schedule)],
               validation_data=(testX, testY),
               validation_steps=np.ceil(len(testX)/batch_size))
@@ -124,3 +127,11 @@ if __name__ == '__main__':
     error = 100 - accuracy
     print("Accuracy : ", accuracy)
     print("Error : ", error)
+
+    # save model
+    model.save(model_filepath)
+
+    # save validation data
+    with h5py.File(hdf5_filepath, 'w') as hf:
+        hf.create_dataset('input_data', data=testX)
+        hf.create_dataset('output_labels', data=testY)
