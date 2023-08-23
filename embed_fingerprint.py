@@ -4,13 +4,12 @@ import numpy as np
 
 class CustomRegularizer(Regularizer):
 
-    def __init__(self, strength, embed_dim, seed=0, apply_penalty=True):
+    def __init__(self, strength, embed_dim, seed=0, apply_penalty=False):
         self.seed = seed
         self.strength = strength
         self.embed_dim = embed_dim
         self.apply_penalty = apply_penalty
         self.signature = None
-        self.coefficient = None
         self.fingerprint = None
         self.proj_matrix = None
         self.orthogonal_matrix = None
@@ -27,7 +26,7 @@ class CustomRegularizer(Regularizer):
         self.signature = self.signature.reshape(self.embed_dim, 1)
 
         # compute the linear mapping
-        self.coefficient = 2 * self.signature - 1
+        coefficient = 2 * self.signature - 1
 
         # build the orthogonal matrix:
         aux_matrix = np.random.randn(self.embed_dim, self.embed_dim)
@@ -41,7 +40,7 @@ class CustomRegularizer(Regularizer):
             raise ValueError('Matrix is not orthogonal')
 
         # apply a basis transformation to the code vector
-        self.fingerprint = np.dot(self.orthogonal_matrix, self.coefficient)
+        self.fingerprint = np.dot(self.orthogonal_matrix, coefficient)
 
         # build the projection matrix for the watermark embedding
         mat_cols = np.prod(weights.shape[0:3])
@@ -62,17 +61,21 @@ class CustomRegularizer(Regularizer):
         # apply a penalty to the loss function
         if self.apply_penalty:
             return regularized_loss
-
         return None
 
     def get_matrix(self):
         return self.proj_matrix, self.orthogonal_matrix
 
     def get_signature(self):
-        return np.squeeze(self.signature), np.squeeze(self.coefficient), np.squeeze(self.fingerprint)
+        return np.squeeze(self.signature), np.squeeze(self.fingerprint)
 
     def get_config(self):
-        return {'strength': self.strength}
+        return {
+            'strength': self.strength,
+            'embed_dim': self.embed_dim,
+            'apply_penalty': self.apply_penalty,
+            'seed': self.seed
+        }
 
 
 
@@ -103,7 +106,7 @@ def show_encoded_signature(model):
 
                 # print the extracted fingerprint
                 extract_fingerprint = np.squeeze(extract_fingerprint)
-                _, _, embed_fingerprint = layer.kernel_regularizer.get_signature()
+                _, embed_fingerprint = layer.kernel_regularizer.get_signature()
                 print('\nExtracted fingerprint:\n{}\n \nError margin:\n{}\n'.format(
                     extract_fingerprint, embed_fingerprint - extract_fingerprint))
 

@@ -18,13 +18,13 @@ pip install scikit-learn == 1.2.2
 Embed the fingerprint during the training phase of the host network:
 
 ```sh
-python train_wrn.py config/train_random_min.json
+python train_model.py config/train_random_min.json
 ```
 
 Train the host network *without* embedding:
 
 ```sh
-python train_wrn.py config/train_non_min.json 
+python train_model.py config/train_non_min.json 
 ```
 
 Extracted fingerprints from the embedded host network and the non-embedded network:
