@@ -2,7 +2,7 @@ from keras.regularizers import Regularizer
 import tensorflow as tf
 import numpy as np
 
-class CustomRegularizer(Regularizer):
+class FingerprintRegularizer(Regularizer):
 
     def __init__(self, strength, embed_dim, seed=0, apply_penalty=False):
         self.seed = seed
@@ -82,7 +82,7 @@ class CustomRegularizer(Regularizer):
 def show_encoded_signature(model):
     for i, layer in enumerate(model.layers):
         try:
-            if isinstance(layer.kernel_regularizer, CustomRegularizer):
+            if isinstance(layer.kernel_regularizer, FingerprintRegularizer):
 
                 # retrieve the weights
                 weights = layer.get_weights()[0]

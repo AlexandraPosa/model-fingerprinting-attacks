@@ -16,7 +16,7 @@ from keras.preprocessing.image import ImageDataGenerator
 from keras import backend as K
 from keras.optimizers import SGD
 from keras.callbacks import ModelCheckpoint, LearningRateScheduler
-from embed_fingerprint import CustomRegularizer
+from embed_fingerprint import FingerprintRegularizer
 from embed_fingerprint import show_encoded_signature
 
 # set seed
@@ -87,7 +87,7 @@ generator.fit(trainX, augment=True)
 # create model
 init_shape = (3, 32, 32) if K.image_data_format() == "channels_first" else (32, 32, 3)
 
-fingerprint_embedding = CustomRegularizer(strength=scale, embed_dim=embed_dim, seed=seed_value,
+fingerprint_embedding = FingerprintRegularizer(strength=scale, embed_dim=embed_dim, seed=seed_value,
                                           apply_penalty=embed_flag)
 
 model = wrn.create_wide_residual_network(init_shape, nb_classes=nb_classes, N=N, k=k, dropout=0.00,
@@ -98,6 +98,7 @@ model.summary()
 sgd = SGD(lr=0.1, momentum=0.9, nesterov=True)
 
 model.compile(loss="categorical_crossentropy", optimizer=sgd, metrics=["accuracy"])
+
 print("Finished compiling")
 
 hist = \
@@ -133,3 +134,27 @@ model.save(model_filepath)
 with h5py.File(hdf5_filepath, 'w') as hf:
     hf.create_dataset('input_data', data=testX)
     hf.create_dataset('output_labels', data=testY)
+
+'''
+import matplotlib.pyplot as plt
+
+# plot the results
+training_accuracy = hist.history['accuracy']
+validation_accuracy = hist.history['val_accuracy']
+
+# Create a range of epochs for the x-axis
+epochs = range(1, len(training_accuracy) + 1)
+
+# Plot training and validation accuracy
+plt.plot(epochs, training_accuracy, label='Training Accuracy')
+plt.plot(epochs, validation_accuracy, label='Validation Accuracy')
+
+# Add labels and title
+plt.xlabel('Epochs')
+plt.ylabel('Accuracy')
+plt.title('Training and Validation Accuracy')
+plt.legend()
+
+# Show the plot
+plt.show()
+'''
