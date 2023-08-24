@@ -3,11 +3,12 @@ import os
 import h5py
 import numpy as np
 import tensorflow as tf
-#import tensorflow_model_optimization as tfmot
+import tensorflow_model_optimization as tfmot
 
 # import modules
+import keras.utils as tf_utils
+from keras.optimizers import SGD
 import sklearn.metrics as metrics
-import keras.utils as kutils
 from embed_fingerprint import FingerprintRegularizer
 
 # set paths
@@ -20,7 +21,7 @@ with h5py.File(hdf5_filepath, 'r') as hf:
     test_output = hf['output_labels'][:]
 
 # register the custom regularizer
-kutils.get_custom_objects()['FingerprintRegularizer'] = FingerprintRegularizer
+tf_utils.get_custom_objects()['FingerprintRegularizer'] = FingerprintRegularizer
 
 # load the pre-trained model
 pretrained_model = tf.keras.models.load_model(model_path)
@@ -43,23 +44,46 @@ def find_fingerprinted_layer(model):
 fingerprinted_layer_name = find_fingerprinted_layer(pretrained_model)
 print("Fingerprinted Layer:", fingerprinted_layer_name)
 
-'''
-# apply the pruning policy to the specific layer
-pruned_model = tfmot.sparsity.keras.update_pruning(
+# Helper function uses `prune_low_magnitude` to make only the
+# Dense layers train with pruning.
+def apply_pruning_to_layer(layer):
+  if layer.name == fingerprinted_layer_name:
+    return tfmot.sparsity.keras.prune_low_magnitude(layer)
+  return layer
+
+# Use `tf.keras.models.clone_model` to apply `apply_pruning_to_dense`
+# to the layers of the model.
+pruned_model = tf.keras.models.clone_model(
     pretrained_model,
-    pruning_policy={fingerprinted_layer_name: 0.01}
+    clone_function=apply_pruning_to_layer
 )
 
 # compile the pruned model
-pruned_model.compile(loss="categorical_crossentropy", optimizer=sgd, metrics=["accuracy"])
+#sgd = SGD(lr=0.1, momentum=0.9, nesterov=True)
+#pruned_model.compile(loss="categorical_crossentropy", optimizer=sgd, metrics=["accuracy"])
+
+# print the model architecture
+pruned_model.summary()
+
+pruned_layer = pruned_model.get_layer("prune_low_magnitude_" + fingerprinted_layer_name)
+pruned_weights = pruned_layer.get_weights()
+
+# Count the number of non-zero elements in the weights
+non_zero_weights = np.count_nonzero(np.concatenate([w.flatten() for w in pruned_weights]))
+
+# Print the total number of parameters and the number of non-zero parameters
+total_params = pruned_layer.count_params()
+print("Fingerprinted layer:")
+print("Total parameters:", total_params)
+print("Number of non-zero weights:", non_zero_weights)
 
 # make predictions using the pruned model
 predictions_1 = pruned_model.predict(test_input)
 predictions_2 = np.argmax(predictions_1, axis=1)
-predictions_3 = kutils.np_utils.to_categorical(predictions_2)
+predictions_3 = tf_utils.np_utils.to_categorical(predictions_2, num_classes=10)
 
 accuracy = metrics.accuracy_score(test_output, predictions_3) * 100
 error = 100 - accuracy
 print("Accuracy : ", accuracy)
-print("Error : ", error)'''
+print("Error : ", error)
 
