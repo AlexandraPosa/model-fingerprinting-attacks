@@ -6,8 +6,6 @@ import h5py
 import numpy as np
 import tensorflow as tf
 import tensorflow_model_optimization as tfmot
-prune_low_magnitude = tfmot.sparsity.keras.prune_low_magnitude
-ConstantSparsity = tfmot.sparsity.keras.ConstantSparsity
 
 # import modules
 import tempfile
@@ -16,6 +14,7 @@ from keras.optimizers import SGD
 import sklearn.metrics as metrics
 from keras.datasets import cifar10
 from embed_fingerprint import FingerprintRegularizer
+tfmo = tfmot.sparsity.keras
 
 # register the custom regularizer
 tf_utils.get_custom_objects()['FingerprintRegularizer'] = FingerprintRegularizer
@@ -71,10 +70,10 @@ print("Fingerprinted Layer:", fingerprinted_layer_name)
 
 # prune the target layer
 def apply_pruning_to_layer(layer):
-  if layer.name == fingerprinted_layer_name:
-    return prune_low_magnitude(layer, pruning_schedule=ConstantSparsity(target_sparsity=0.9,
-                                                                        begin_step=0))
-  return layer
+    if layer.name == fingerprinted_layer_name:
+        return tfmo.prune_low_magnitude(layer, pruning_schedule=tfmo.ConstantSparsity(target_sparsity=0.1,
+                                                                                      begin_step=0))
+    return layer
 
 # create the pruned model
 pruned_model = tf.keras.models.clone_model(pretrained_model, clone_function=apply_pruning_to_layer)
@@ -90,8 +89,8 @@ print("Finished compiling")
 # fine-tuning the pruned model
 logdir = tempfile.mkdtemp()
 
-callbacks = [tfmot.sparsity.keras.UpdatePruningStep(),
-             tfmot.sparsity.keras.PruningSummaries(log_dir=logdir)
+callbacks = [tfmo.UpdatePruningStep(),
+             tfmo.PruningSummaries(log_dir=logdir)
              ]
 
 pruned_model.fit(train_input,
@@ -115,6 +114,7 @@ print("Fingerprinted layer:")
 print("Number of pruned weights:", num_pruned_weights)
 print("Number of active weights:", num_active_weights)
 '''
+
 # make predictions using the pruned model
 predictions_1 = pruned_model.predict(test_input)
 predictions_2 = np.argmax(predictions_1, axis=1)
@@ -124,4 +124,3 @@ accuracy = metrics.accuracy_score(test_output, predictions_3) * 100
 error = 100 - accuracy
 print("Accuracy : ", accuracy)
 print("Error : ", error)
-

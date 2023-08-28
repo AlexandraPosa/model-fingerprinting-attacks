@@ -12,6 +12,7 @@ For further reference, you can access the original project through the following
 ```sh
 pip install tensorflow == 2.12.0 
 pip install scikit-learn == 1.2.2 
+pip install tensorflow-model-optimization == 0.7.5
 ```
 
 ## Usage
