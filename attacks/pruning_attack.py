@@ -14,7 +14,12 @@ import keras.utils as tf_utils
 from keras.optimizers import SGD
 import sklearn.metrics as metrics
 from keras.datasets import cifar10
+
+# add the parent directory of the script's location to the path to import the embed_fingerprint module
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from embed_fingerprint import FingerprintRegularizer
+
+# set abreviation
 tfmo = tfmot.sparsity.keras
 
 '''
@@ -25,15 +30,13 @@ with h5py.File(hdf5_filepath, 'r') as hf:
     test_output = hf['output_labels'][:]
 '''
 # -------------------------------------------- Load and Prepare Data ---------------------------------------------------
-
 # set a seed
 seed_value = 0
 np.random.seed(seed_value)
 tf.random.set_seed(seed_value)
-tfmo.seed_everything(seed_value)
 os.environ['PYTHONHASHSEED'] = str(seed_value)
 
-# register the custom regularizer
+# register the custom regularizer to load the pre-trained model
 tf_utils.get_custom_objects()['FingerprintRegularizer'] = FingerprintRegularizer
 
 # set configuration
