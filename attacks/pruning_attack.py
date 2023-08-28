@@ -1,4 +1,7 @@
-# import libraries and modules
+# This script is designed to simulate a pruning attack on the fingerprinted layer
+# while incorporating the process of fine-tuning.
+
+# ------------------------------------- Import Libraries and Modules ---------------------------------------------------
 import os
 import sys
 import json
@@ -6,8 +9,6 @@ import h5py
 import numpy as np
 import tensorflow as tf
 import tensorflow_model_optimization as tfmot
-
-# import modules
 import tempfile
 import keras.utils as tf_utils
 from keras.optimizers import SGD
@@ -16,9 +17,6 @@ from keras.datasets import cifar10
 from embed_fingerprint import FingerprintRegularizer
 tfmo = tfmot.sparsity.keras
 
-# register the custom regularizer
-tf_utils.get_custom_objects()['FingerprintRegularizer'] = FingerprintRegularizer
-
 '''
 # load the validation data
 hdf5_filepath = os.path.join("..", "result", "validation_data.h5")
@@ -26,6 +24,17 @@ with h5py.File(hdf5_filepath, 'r') as hf:
     test_input = hf['input_data'][:]
     test_output = hf['output_labels'][:]
 '''
+# -------------------------------------------- Load and Prepare Data ---------------------------------------------------
+
+# set a seed
+seed_value = 0
+np.random.seed(seed_value)
+tf.random.set_seed(seed_value)
+tfmo.seed_everything(seed_value)
+os.environ['PYTHONHASHSEED'] = str(seed_value)
+
+# register the custom regularizer
+tf_utils.get_custom_objects()['FingerprintRegularizer'] = FingerprintRegularizer
 
 # set configuration
 config_fname = sys.argv[1]
@@ -52,6 +61,8 @@ pretrained_model = tf.keras.models.load_model(model_path)
 
 # print the model architecture
 pretrained_model.summary()
+
+# -------------------------------------------- Prune the Target Layer --------------------------------------------------
 
 # find the layer where the fingerprint is embedded
 def find_fingerprinted_layer(model):
@@ -81,6 +92,8 @@ pruned_model = tf.keras.models.clone_model(pretrained_model, clone_function=appl
 # print the model architecture
 pruned_model.summary()
 
+# ---------------------------------------- Fine-Tune the Pruned Model --------------------------------------------------
+
 # compile the pruned model
 sgd = SGD(lr=0.1, momentum=0.9, nesterov=True)
 pruned_model.compile(loss="categorical_crossentropy", optimizer=sgd, metrics=["accuracy"])
@@ -90,16 +103,14 @@ print("Finished compiling")
 logdir = tempfile.mkdtemp()
 
 callbacks = [tfmo.UpdatePruningStep(),
-             tfmo.PruningSummaries(log_dir=logdir)
-             ]
+             tfmo.PruningSummaries(log_dir=logdir)]
 
 pruned_model.fit(train_input,
                  train_output,
                  batch_size=batch_size,
                  epochs=nb_epoch,
                  validation_split=0.1,
-                 callbacks=callbacks
-                 )
+                 callbacks=callbacks)
 
 '''
 # count the number of pruned (0) and active (1) weights
@@ -114,6 +125,7 @@ print("Fingerprinted layer:")
 print("Number of pruned weights:", num_pruned_weights)
 print("Number of active weights:", num_active_weights)
 '''
+# ---------------------------------------- Evaluate the Pruned Model --------------------------------------------------
 
 # make predictions using the pruned model
 predictions_1 = pruned_model.predict(test_input)
