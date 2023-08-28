@@ -70,10 +70,8 @@ def schedule(epoch_idx):
 
 # fitting data for learning
 (trainX, trainY), (testX, testY) = dataset.load_data()
-trainX = trainX.astype('float32')
-trainX /= 255.0
-testX = testX.astype('float32')
-testX /= 255.0
+trainX = trainX.astype('float32') / 255.0
+testX = testX.astype('float32') / 255.0
 trainY = kutils.to_categorical(trainY)
 testY = kutils.to_categorical(testY)
 
@@ -88,7 +86,7 @@ generator.fit(trainX, augment=True)
 init_shape = (3, 32, 32) if K.image_data_format() == "channels_first" else (32, 32, 3)
 
 fingerprint_embedding = FingerprintRegularizer(strength=scale, embed_dim=embed_dim, seed=seed_value,
-                                          apply_penalty=embed_flag)
+                                               apply_penalty=embed_flag)
 
 model = wrn.create_wide_residual_network(init_shape, nb_classes=nb_classes, N=N, k=k, dropout=0.00,
                                          custom_regularizer=fingerprint_embedding, target_blk_num=target_blk_id)
@@ -96,9 +94,7 @@ model.summary()
 
 # training process
 sgd = SGD(lr=0.1, momentum=0.9, nesterov=True)
-
 model.compile(loss="categorical_crossentropy", optimizer=sgd, metrics=["accuracy"])
-
 print("Finished compiling")
 
 hist = \
@@ -130,12 +126,12 @@ print("Error : ", error)
 # save model
 model.save(model_filepath)
 
+'''
 # save validation data
 with h5py.File(hdf5_filepath, 'w') as hf:
     hf.create_dataset('input_data', data=testX)
     hf.create_dataset('output_labels', data=testY)
 
-'''
 import matplotlib.pyplot as plt
 
 # plot the results
