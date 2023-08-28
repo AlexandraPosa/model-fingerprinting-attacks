@@ -41,6 +41,7 @@ config_fname = sys.argv[1]
 fine_tune_settings = json.load(open(config_fname))
 
 # read parameters
+sparsity_level = fine_tune_settings['sparsity_level']
 batch_size = fine_tune_settings['batch_size']
 nb_epoch = fine_tune_settings['epoch']
 dataset = cifar10 if fine_tune_settings['dataset'] == 'cifar10' else None
@@ -82,7 +83,7 @@ print("Fingerprinted Layer:", fingerprinted_layer_name)
 # prune the target layer
 def apply_pruning_to_layer(layer):
     if layer.name == fingerprinted_layer_name:
-        return tfmo.prune_low_magnitude(layer, pruning_schedule=tfmo.ConstantSparsity(target_sparsity=0.1,
+        return tfmo.prune_low_magnitude(layer, pruning_schedule=tfmo.ConstantSparsity(target_sparsity=sparsity_level,
                                                                                       begin_step=0))
     return layer
 
