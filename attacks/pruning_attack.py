@@ -6,21 +6,19 @@ import os
 import sys
 import json
 import h5py
+import tempfile
 import numpy as np
 import tensorflow as tf
-import tensorflow_model_optimization as tfmot
-import tempfile
 import keras.utils as tf_utils
 from keras.optimizers import SGD
 import sklearn.metrics as metrics
 from keras.datasets import cifar10
+import tensorflow_model_optimization as tfmot
+tfmo = tfmot.sparsity.keras
 
 # add the parent directory of the script's location to the path to import the embed_fingerprint module
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from embed_fingerprint import FingerprintRegularizer
-
-# set abreviation
-tfmo = tfmot.sparsity.keras
 
 '''
 # load the validation data
@@ -35,6 +33,10 @@ seed_value = 0
 np.random.seed(seed_value)
 tf.random.set_seed(seed_value)
 os.environ['PYTHONHASHSEED'] = str(seed_value)
+
+# set the random seed for GPU (if using one)
+if tf.config.experimental.list_physical_devices('GPU'):
+    tf.config.experimental.set_seed(seed_value)
 
 # register the custom regularizer to load the pre-trained model
 tf_utils.get_custom_objects()['FingerprintRegularizer'] = FingerprintRegularizer
