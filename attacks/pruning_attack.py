@@ -62,7 +62,7 @@ model_path = os.path.join("result", "embed_model.keras")
 pretrained_model = tf.keras.models.load_model(model_path)
 
 # print the model architecture
-pretrained_model.summary()
+#pretrained_model.summary()
 
 # -------------------------------------------- Prune the Target Layer --------------------------------------------------
 
@@ -79,7 +79,6 @@ def find_fingerprinted_layer(model):
     return embedded_layer_name
 
 fingerprinted_layer_name = find_fingerprinted_layer(pretrained_model)
-print("Fingerprinted Layer:", fingerprinted_layer_name)
 
 # prune the target layer
 def apply_pruning_to_layer(layer):
@@ -92,12 +91,12 @@ def apply_pruning_to_layer(layer):
 pruned_model = tf.keras.models.clone_model(pretrained_model, clone_function=apply_pruning_to_layer)
 
 # print the model architecture
-pruned_model.summary()
+#pruned_model.summary()
 
 # ---------------------------------------- Fine-Tune the Pruned Model --------------------------------------------------
 
 # compile the pruned model
-sgd = SGD(lr=0.1, momentum=0.9, nesterov=True)
+sgd = SGD(lr=0.001, momentum=0.9, nesterov=True)
 pruned_model.compile(loss="categorical_crossentropy", optimizer=sgd, metrics=["accuracy"])
 print("Finished compiling")
 
@@ -107,6 +106,7 @@ logdir = tempfile.mkdtemp()
 callbacks = [tfmo.UpdatePruningStep(),
              tfmo.PruningSummaries(log_dir=logdir)]
 
+print("\nFine-tuning the pruned model:")
 pruned_model.fit(train_input,
                  train_output,
                  batch_size=batch_size,
@@ -114,26 +114,44 @@ pruned_model.fit(train_input,
                  validation_split=0.1,
                  callbacks=callbacks)
 
-'''
-# count the number of pruned (0) and active (1) weights
-pruned_layer = pruned_model.get_layer("prune_low_magnitude_" + fingerprinted_layer_name)
-pruning_mask = pruned_layer.get_mask() ???
-flattened_mask = np.concatenate([mask.numpy().flatten() for mask in pruning_mask])
-num_pruned_weights = np.count_nonzero(pruning_mask == 0)
-num_active_weights = np.count_nonzero(pruning_mask == 1)
-
-# print the pruning results
-print("Fingerprinted layer:")
-print("Number of pruned weights:", num_pruned_weights)
-print("Number of active weights:", num_active_weights)
-'''
 # ---------------------------------------- Evaluate the Pruned Model --------------------------------------------------
 
+# check that the layer was correctly pruned:
+
+print(f"\nAssessing the sparsity level within the fingerprinted layer: {fingerprinted_layer_name}")
+
+def print_model_weights_sparsity(model, fingerprinted_layer_name):
+    for layer in model.layers:
+        if layer.name == fingerprinted_layer_name:
+            if isinstance(layer, tf.keras.layers.Wrapper):
+                weights = layer.trainable_weights
+            else:
+                weights = layer.weights
+            for weight in weights:
+                # ignore auxiliary quantization weights
+                if "quantize_layer" in weight.name:
+                    continue
+                weight_size = weight.numpy().size
+                zero_num = np.count_nonzero(weight == 0)
+                print(
+                    f"{weight.name}: {zero_num / weight_size:.2%} sparsity ",
+                    f"({zero_num}/{weight_size})"
+                )
+
+# strip the pruning wrapper before checking
+stripped_pruned_model = tfmo.strip_pruning(pruned_model)
+print_model_weights_sparsity(stripped_pruned_model, fingerprinted_layer_name)
+
+# print the pruned model architecture
+#stripped_pruned_model.summary()
+
 # make predictions using the pruned model
-predictions_1 = pruned_model.predict(test_input)
+print("\nPerforming an evaluation on the pruned model:")
+predictions_1 = stripped_pruned_model.predict(test_input)
 predictions_2 = np.argmax(predictions_1, axis=1)
 predictions_3 = tf_utils.np_utils.to_categorical(predictions_2, num_classes=10)
 
+# compute the accuracy of the pruned model
 accuracy = metrics.accuracy_score(test_output, predictions_3) * 100
 error = 100 - accuracy
 print("Accuracy : ", accuracy)
