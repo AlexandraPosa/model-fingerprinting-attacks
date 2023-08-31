@@ -96,7 +96,7 @@ pruned_model = tf.keras.models.clone_model(pretrained_model, clone_function=appl
 # ---------------------------------------- Fine-Tune the Pruned Model --------------------------------------------------
 
 # compile the pruned model
-sgd = SGD(lr=0.001, momentum=0.9, nesterov=True)
+sgd = SGD(lr=0.0005, momentum=0.9, nesterov=True)
 pruned_model.compile(loss="categorical_crossentropy", optimizer=sgd, metrics=["accuracy"])
 print("Finished compiling")
 
@@ -111,13 +111,12 @@ pruned_model.fit(train_input,
                  train_output,
                  batch_size=batch_size,
                  epochs=nb_epoch,
-                 validation_split=0.1,
+                 validation_split=0.15,
                  callbacks=callbacks)
 
 # ---------------------------------------- Evaluate the Pruned Model --------------------------------------------------
 
 # check that the layer was correctly pruned:
-
 print(f"\nAssessing the sparsity level within the fingerprinted layer: {fingerprinted_layer_name}")
 
 def print_model_weights_sparsity(model, fingerprinted_layer_name):
