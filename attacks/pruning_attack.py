@@ -5,7 +5,6 @@
 import os
 import sys
 import json
-import h5py
 import tempfile
 import numpy as np
 import tensorflow as tf
@@ -16,18 +15,14 @@ from keras.datasets import cifar10
 import tensorflow_model_optimization as tfmot
 tfmo = tfmot.sparsity.keras
 
-# add the parent directory of the script's location to the path to import the embed_fingerprint module
+# add the parent directory of the script's location to the path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
+# import the embed_fingerprint module
 from embed_fingerprint import FingerprintRegularizer
 
-'''
-# load the validation data
-hdf5_filepath = os.path.join("..", "result", "validation_data.h5")
-with h5py.File(hdf5_filepath, 'r') as hf:
-    test_input = hf['input_data'][:]
-    test_output = hf['output_labels'][:]
-'''
-# -------------------------------------------- Load and Prepare Data ---------------------------------------------------
+# ------------------------------------- Initialization and Configuration -----------------------------------------------
+
 # set a seed
 seed_value = 0
 np.random.seed(seed_value)
@@ -40,6 +35,8 @@ tf_utils.get_custom_objects()['FingerprintRegularizer'] = FingerprintRegularizer
 # set configuration
 config_fname = sys.argv[1]
 fine_tune_settings = json.load(open(config_fname))
+
+# -------------------------------------------- Load and Prepare Data ---------------------------------------------------
 
 # read parameters
 sparsity_level = fine_tune_settings['sparsity_level']
@@ -114,7 +111,7 @@ pruned_model.fit(train_input,
                  validation_split=0.15,
                  callbacks=callbacks)
 
-# ---------------------------------------- Evaluate the Pruned Model --------------------------------------------------
+# ----------------------------------- Check the Accuracy of the Pruning ------------------------------------------------
 
 # check that the layer was correctly pruned:
 print(f"\nAssessing the sparsity level within the fingerprinted layer: {fingerprinted_layer_name}")
@@ -144,6 +141,8 @@ print_model_weights_sparsity(stripped_pruned_model, fingerprinted_layer_name)
 # print the pruned model architecture
 #stripped_pruned_model.summary()
 
+# ---------------------------- Validate Training Accuracy and Save Model -----------------------------------------------
+
 # make predictions using the pruned model
 print("\nPerforming an evaluation on the pruned model:")
 predictions_1 = stripped_pruned_model.predict(test_input)
@@ -155,3 +154,7 @@ accuracy = metrics.accuracy_score(test_output, predictions_3) * 100
 error = 100 - accuracy
 print("Accuracy : ", accuracy)
 print("Error : ", error)
+
+# save model
+pruned_model_fname = os.path.join('result', f'pruned_model_sparsity{sparsity_level}_epoch{nb_epoch}.keras')
+stripped_pruned_model.save(pruned_model_fname)
