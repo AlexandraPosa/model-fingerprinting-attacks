@@ -1,4 +1,8 @@
-# importing libraries
+# This script performs the training of a wide residual network using the CIFAR-10 dataset
+# while providing an optional feature to embed a fingerprint into a specified target layer.
+
+# ------------------------------------- Import Libraries and Modules ---------------------------------------------------
+
 import numpy as np
 import random
 import sys
@@ -9,8 +13,6 @@ import tensorflow as tf
 import sklearn.metrics as metrics
 import wide_residual_network as wrn
 import keras.utils.np_utils as kutils
-
-# importing modules
 from keras.datasets import cifar10
 from keras.preprocessing.image import ImageDataGenerator
 from keras import backend as K
@@ -18,6 +20,8 @@ from keras.optimizers import SGD
 from keras.callbacks import ModelCheckpoint, LearningRateScheduler
 from embed_fingerprint import FingerprintRegularizer
 from embed_fingerprint import show_encoded_signature
+
+# ------------------------------------- Initialization and Configuration -----------------------------------------------
 
 # set seed
 seed_value = 0
@@ -33,10 +37,23 @@ train_settings = json.load(open(settings_json_fname))
 # set paths
 result_path = './result'
 os.makedirs(result_path) if not os.path.isdir(result_path) else None
-hdf5_filepath = os.path.join(result_path, 'validation_data.h5')
 model_checkpoint_fname = os.path.join(result_path, 'model_checkpoint.h5')
-model_filepath = os.path.join(result_path, 'embed_model.keras') if train_settings['embed_flag'] == True \
+fingerprint_fname = os.path.join(result_path, 'fingerprint_data.h5')
+model_filepath = os.path.join(result_path, 'embed_model.keras') \
+    if train_settings['embed_flag'] == True \
     else os.path.join(result_path, 'non_embed_model.keras')
+
+# ---------------------------------------- Save and Load Functions -----------------------------------------------------
+
+# Save the keys used for the fingerprint embedding to an HDF5 file
+def save_to_hdf5(proj_matrix, ortho_matrix, fingerprint, signature, fingerprint_fname):
+    with h5py.File(fingerprint_fname, 'w') as hdf5_file:
+        hdf5_file.create_dataset('proj_matrix', data=proj_matrix)
+        hdf5_file.create_dataset('ortho_matrix', data=ortho_matrix)
+        hdf5_file.create_dataset('signature', data=signature)
+        hdf5_file.create_dataset('fingerprint', data=fingerprint)
+
+# --------------------------------------------- Load Dataset -----------------------------------------------------------
 
 # load dataset
 if train_settings['dataset'] == 'cifar10':
@@ -45,6 +62,8 @@ if train_settings['dataset'] == 'cifar10':
 else:
     print('not supported dataset "{}"'.format(train_settings['dataset']))
     exit(1)
+
+# ------------------------------------------- Read Parameters ----------------------------------------------------------
 
 # read parameters
 batch_size = train_settings['batch_size']
@@ -68,6 +87,8 @@ def schedule(epoch_idx):
         return 0.0032
     return 0.00064
 
+# ------------------------------- Data Preprocessing and Augmentation --------------------------------------------------
+
 # fitting data for learning
 (trainX, trainY), (testX, testY) = dataset.load_data()
 trainX = trainX.astype('float32') / 255.0
@@ -82,6 +103,8 @@ generator = ImageDataGenerator(rotation_range=10,
 
 generator.fit(trainX, augment=True)
 
+# --------------------------------------------- Create Model -----------------------------------------------------------
+
 # create model
 init_shape = (3, 32, 32) if K.image_data_format() == "channels_first" else (32, 32, 3)
 
@@ -91,6 +114,8 @@ fingerprint_embedding = FingerprintRegularizer(strength=scale, embed_dim=embed_d
 model = wrn.create_wide_residual_network(init_shape, nb_classes=nb_classes, N=N, k=k, dropout=0.00,
                                          custom_regularizer=fingerprint_embedding, target_blk_num=target_blk_id)
 model.summary()
+
+# ------------------------------------------ Training Process ----------------------------------------------------------
 
 # training process
 sgd = SGD(lr=0.1, momentum=0.9, nesterov=True)
@@ -105,19 +130,30 @@ model.fit(generator.flow(trainX, trainY, batch_size=batch_size),
           validation_data=(testX, testY),
           validation_steps=np.ceil(len(testX)/batch_size))
 
+# -------------------------------- Print and Save the Fingerprint Information ------------------------------------------
+
 # print the keys used for the embedding
 proj_matrix, ortho_matrix = fingerprint_embedding.get_matrix()
 print('\nProjection matrix.\n{}\n \nOrthogonal matrix:\n{}\n'.format(proj_matrix, ortho_matrix))
 signature, fingerprint = fingerprint_embedding.get_signature()
 print('\nSignature:\n{}\n \nEmbedded fingerprint:\n{}\n'.format(signature, fingerprint))
+
+# save the keys to file
+save_to_hdf5(proj_matrix, ortho_matrix, fingerprint, signature, fingerprint_fname)
+print(f'Data saved to {fingerprint_fname}')
+
+# print the extracted fingerprint
 show_encoded_signature(model)
 
-# validate training accuracy
+# ---------------------------- Validate Training Accuracy and Save Model -----------------------------------------------
+
+# make predictions using the pruned model
 yPreds = model.predict(testX)
 yPred = np.argmax(yPreds, axis=1)
 yPred = kutils.to_categorical(yPred)
 yTrue = testY
 
+# compute the accuracy of the pruned model
 accuracy = metrics.accuracy_score(yTrue, yPred) * 100
 error = 100 - accuracy
 print("Accuracy : ", accuracy)
@@ -127,11 +163,6 @@ print("Error : ", error)
 model.save(model_filepath)
 
 '''
-# save validation data
-with h5py.File(hdf5_filepath, 'w') as hf:
-    hf.create_dataset('input_data', data=testX)
-    hf.create_dataset('output_labels', data=testY)
-
 import matplotlib.pyplot as plt
 
 # plot the results
