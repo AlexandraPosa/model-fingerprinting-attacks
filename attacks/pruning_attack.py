@@ -93,7 +93,7 @@ pruned_model = tf.keras.models.clone_model(pretrained_model, clone_function=appl
 # ---------------------------------------- Fine-Tune the Pruned Model --------------------------------------------------
 
 # compile the pruned model
-sgd = SGD(lr=0.0005, momentum=0.9, nesterov=True)
+sgd = SGD(lr=0.0008, momentum=0.9, nesterov=True)
 pruned_model.compile(loss="categorical_crossentropy", optimizer=sgd, metrics=["accuracy"])
 print("Finished compiling")
 
