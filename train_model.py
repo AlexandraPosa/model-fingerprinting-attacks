@@ -80,28 +80,42 @@ lr_schedule = [60, 120, 160]
 
 def schedule(epoch_idx):
     if (epoch_idx + 1) < lr_schedule[0]:
-        return 0.08
+        return 0.05
     elif (epoch_idx + 1) < lr_schedule[1]:
-        return 0.016
+        return 0.01
     elif (epoch_idx + 1) < lr_schedule[2]:
-        return 0.0032
-    return 0.00064
+        return 0.002
+    return 0.0004
 
 # ------------------------------- Data Preprocessing and Augmentation --------------------------------------------------
 
-# fitting data for learning
-(trainX, trainY), (testX, testY) = dataset.load_data()
-trainX = trainX.astype('float32') / 255.0
-testX = testX.astype('float32') / 255.0
-trainY = kutils.to_categorical(trainY)
-testY = kutils.to_categorical(testY)
+# load data
+(train_input, train_output), (test_input, test_output) = dataset.load_data()
+train_input = train_input.astype('float32') / 255.0
+test_input = test_input.astype('float32') / 255.0
+train_output = kutils.to_categorical(train_output)
+test_output = kutils.to_categorical(test_output)
 
+# split the data for training and validation
+total_samples = len(train_input)
+train_size = int(0.8 * total_samples)  # 80% for training
+validation_size = total_samples - train_size  # 20% for validation
+
+# Split the training data
+training_input = train_input[:train_size]
+training_output = train_output[:train_size]
+
+# Split the validation data
+validation_input = train_input[train_size:]
+validation_output = train_output[train_size:]
+
+# fitting data for learning
 generator = ImageDataGenerator(rotation_range=10,
                                width_shift_range=5./32,
                                height_shift_range=5./32,
                                horizontal_flip=True)
 
-generator.fit(trainX, augment=True)
+generator.fit(training_input, augment=True)
 
 # --------------------------------------------- Create Model -----------------------------------------------------------
 
@@ -117,18 +131,26 @@ model.summary()
 
 # ------------------------------------------ Training Process ----------------------------------------------------------
 
-# training process
-sgd = SGD(lr=0.1, momentum=0.9, nesterov=True)
-model.compile(loss="categorical_crossentropy", optimizer=sgd, metrics=["accuracy"])
+# model compilation
+model.compile(loss="categorical_crossentropy",
+              optimizer=SGD(lr=0.05, momentum=0.9, nesterov=True),
+              metrics=["accuracy"])
+
 print("Finished compiling")
 
+# model training
+callbacks = [ModelCheckpoint(model_checkpoint_fname,
+                             monitor="val_accuracy",
+                             save_best_only=True),
+             LearningRateScheduler(schedule=schedule)]
+
 hist = \
-model.fit(generator.flow(trainX, trainY, batch_size=batch_size),
-          steps_per_epoch=np.ceil(len(trainX)/batch_size), epochs=nb_epoch,
-          callbacks=[ModelCheckpoint(model_checkpoint_fname, monitor="val_accuracy", save_best_only=True),
-                     LearningRateScheduler(schedule=schedule)],
-          validation_data=(testX, testY),
-          validation_steps=np.ceil(len(testX)/batch_size))
+model.fit(generator.flow(training_input, training_output, batch_size=batch_size),
+          steps_per_epoch=np.ceil(len(training_input)/batch_size),
+          epochs=nb_epoch,
+          callbacks=callbacks,
+          validation_data=(validation_input, validation_output),
+          validation_steps=np.ceil(len(validation_input)/batch_size))
 
 # -------------------------------- Print and Save the Fingerprint Information ------------------------------------------
 
@@ -148,13 +170,12 @@ show_encoded_signature(model)
 # ---------------------------- Validate Training Accuracy and Save Model -----------------------------------------------
 
 # make predictions using the pruned model
-yPreds = model.predict(testX)
-yPred = np.argmax(yPreds, axis=1)
-yPred = kutils.to_categorical(yPred)
-yTrue = testY
+predictions_1 = model.predict(test_input)
+predictions_2 = np.argmax(predictions_1, axis=1)
+predictions_3 = kutils.to_categorical(predictions_2)
 
 # compute the accuracy of the pruned model
-accuracy = metrics.accuracy_score(yTrue, yPred) * 100
+accuracy = metrics.accuracy_score(test_output, predictions_3) * 100
 error = 100 - accuracy
 print("Accuracy : ", accuracy)
 print("Error : ", error)
