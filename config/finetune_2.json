@@ -1,6 +1,6 @@
 {
   "dataset": "cifar10",
-  "sparsity_level": 0.9,
+  "sparsity_level": 0.01,
   "batch_size": 64,
   "epoch": 2
 }
