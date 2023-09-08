@@ -37,6 +37,7 @@ train_settings = json.load(open(settings_json_fname))
 # set paths
 result_path = './result'
 os.makedirs(result_path) if not os.path.isdir(result_path) else None
+training_history_fname = os.path.join(result_path, 'model_training_history.h5')
 model_checkpoint_fname = os.path.join(result_path, 'model_checkpoint.h5')
 fingerprint_fname = os.path.join(result_path, 'fingerprint_data.h5')
 model_filepath = os.path.join(result_path, 'embed_model.keras') \
@@ -45,13 +46,19 @@ model_filepath = os.path.join(result_path, 'embed_model.keras') \
 
 # ---------------------------------------- Save and Load Functions -----------------------------------------------------
 
-# Save the keys used for the fingerprint embedding to an HDF5 file
-def save_to_hdf5(proj_matrix, ortho_matrix, fingerprint, signature, fingerprint_fname):
+# save the keys used for the fingerprint embedding to an HDF5 file
+def save_embedding_keys(proj_matrix, ortho_matrix, fingerprint, signature, fingerprint_fname):
     with h5py.File(fingerprint_fname, 'w') as hdf5_file:
         hdf5_file.create_dataset('proj_matrix', data=proj_matrix)
         hdf5_file.create_dataset('ortho_matrix', data=ortho_matrix)
         hdf5_file.create_dataset('signature', data=signature)
         hdf5_file.create_dataset('fingerprint', data=fingerprint)
+
+# save the model training history to an HDF5 file
+def save_training_history(history, filename):
+    with h5py.File(filename, 'w') as hf:
+        for key, value in history.history.items():
+            hf.create_dataset(key, data=value)
 
 # --------------------------------------------- Load Dataset -----------------------------------------------------------
 
@@ -161,7 +168,7 @@ signature, fingerprint = fingerprint_embedding.get_signature()
 print('\nSignature:\n{}\n \nEmbedded fingerprint:\n{}\n'.format(signature, fingerprint))
 
 # save the keys to file
-save_to_hdf5(proj_matrix, ortho_matrix, fingerprint, signature, fingerprint_fname)
+save_embedding_keys(proj_matrix, ortho_matrix, fingerprint, signature, fingerprint_fname)
 print(f'Data saved to {fingerprint_fname}')
 
 # print the extracted fingerprint
@@ -183,26 +190,7 @@ print("Error : ", error)
 # save model
 model.save(model_filepath)
 
-'''
-import matplotlib.pyplot as plt
+# save training history to file
+save_training_history(hist, training_history_fname)
 
-# plot the results
-training_accuracy = hist.history['accuracy']
-validation_accuracy = hist.history['val_accuracy']
 
-# Create a range of epochs for the x-axis
-epochs = range(1, len(training_accuracy) + 1)
-
-# Plot training and validation accuracy
-plt.plot(epochs, training_accuracy, label='Training Accuracy')
-plt.plot(epochs, validation_accuracy, label='Validation Accuracy')
-
-# Add labels and title
-plt.xlabel('Epochs')
-plt.ylabel('Accuracy')
-plt.title('Training and Validation Accuracy')
-plt.legend()
-
-# Show the plot
-plt.show()
-'''
