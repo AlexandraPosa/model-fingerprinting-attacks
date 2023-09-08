@@ -1,6 +1,7 @@
 from keras.regularizers import Regularizer
 import tensorflow as tf
 import numpy as np
+import h5py
 
 class FingerprintRegularizer(Regularizer):
 
@@ -79,7 +80,7 @@ class FingerprintRegularizer(Regularizer):
 
 
 
-def show_encoded_signature(model):
+def extract_fingerprint(model, extracted_fingerprint_fname):
     for i, layer in enumerate(model.layers):
         try:
             if isinstance(layer.kernel_regularizer, FingerprintRegularizer):
@@ -99,16 +100,14 @@ def show_encoded_signature(model):
                 extract_coefficient = np.dot(extract_fingerprint.T, ortho_matrix)
                 extract_signature = 0.5 * (extract_coefficient + 1)
 
-                # print the extracted signature
-                print('\nUser specific code-vector:')
-                print('Layer Index = {} \nClass = {} \n{}\n'.format(i, layer.__class__.__name__,
-                                                                    np.squeeze(extract_signature)))
+                # print the fingerprint embedding information
+                print(f'Extracted fingerprint saved to {extracted_fingerprint_fname}')
+                print('Fingerprinted Layer Index = {}  Class = {}'.format(i, layer.__class__.__name__))
 
-                # print the extracted fingerprint
-                extract_fingerprint = np.squeeze(extract_fingerprint)
-                _, embed_fingerprint = layer.kernel_regularizer.get_signature()
-                print('\nExtracted fingerprint:\n{}\n \nError margin:\n{}\n'.format(
-                    extract_fingerprint, embed_fingerprint - extract_fingerprint))
+                # save the extracted fingerprint to an HDF5 file
+                with h5py.File(extracted_fingerprint_fname, 'w') as hf:
+                    hf.create_dataset('fingerprint', data=np.squeeze(extract_fingerprint))
+                    hf.create_dataset('signature', data=np.squeeze(extract_signature))
 
         except AttributeError:
             continue  # Continue the loop if the layer has no regularizers

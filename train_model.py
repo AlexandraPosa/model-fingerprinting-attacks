@@ -19,7 +19,7 @@ from keras import backend as K
 from keras.optimizers import SGD
 from keras.callbacks import ModelCheckpoint, LearningRateScheduler
 from embed_fingerprint import FingerprintRegularizer
-from embed_fingerprint import show_encoded_signature
+from embed_fingerprint import extract_fingerprint
 
 # ------------------------------------- Initialization and Configuration -----------------------------------------------
 
@@ -37,12 +37,16 @@ train_settings = json.load(open(settings_json_fname))
 # set paths
 result_path = './result'
 os.makedirs(result_path) if not os.path.isdir(result_path) else None
+
+extracted_fingerprint_fname = os.path.join(result_path, 'extracted_fingerprint.h5')
+embedding_keys_fname = os.path.join(result_path, 'embedding_keys.h5')
+
 training_history_fname = os.path.join(result_path, 'model_training_history.h5')
 model_checkpoint_fname = os.path.join(result_path, 'model_checkpoint.h5')
-fingerprint_fname = os.path.join(result_path, 'fingerprint_data.h5')
-model_filepath = os.path.join(result_path, 'embed_model.keras') \
+
+model_filepath = os.path.join(result_path, 'embedded_model.keras') \
     if train_settings['embed_flag'] == True \
-    else os.path.join(result_path, 'non_embed_model.keras')
+    else os.path.join(result_path, 'non_embedded_model.keras')
 
 # ---------------------------------------- Save and Load Functions -----------------------------------------------------
 
@@ -103,16 +107,16 @@ test_input = test_input.astype('float32') / 255.0
 train_output = kutils.to_categorical(train_output)
 test_output = kutils.to_categorical(test_output)
 
-# split the data for training and validation
+# calculate the sizes for training and validation
 total_samples = len(train_input)
 train_size = int(0.8 * total_samples)  # 80% for training
-validation_size = total_samples - train_size  # 20% for validation
+validation_size = total_samples - train_size  # 20% for validation during training
 
-# Split the training data
+# split the training data
 training_input = train_input[:train_size]
 training_output = train_output[:train_size]
 
-# Split the validation data
+# split the validation data
 validation_input = train_input[train_size:]
 validation_output = train_output[train_size:]
 
@@ -154,29 +158,32 @@ callbacks = [ModelCheckpoint(model_checkpoint_fname,
 hist = \
 model.fit(generator.flow(training_input, training_output, batch_size=batch_size),
           steps_per_epoch=np.ceil(len(training_input)/batch_size),
-          epochs=nb_epoch,
+          epochs=1,
           callbacks=callbacks,
           validation_data=(validation_input, validation_output),
           validation_steps=np.ceil(len(validation_input)/batch_size))
 
-# -------------------------------- Print and Save the Fingerprint Information ------------------------------------------
+# save training history to file
+save_training_history(hist, training_history_fname)
+print(f'Model training history saved to {training_history_fname}')
 
-# print the keys used for the embedding
+# ------------------------------------- Save Fingerprint Information ---------------------------------------------------
+
+# access the keys used for the embedding
 proj_matrix, ortho_matrix = fingerprint_embedding.get_matrix()
-print('\nProjection matrix.\n{}\n \nOrthogonal matrix:\n{}\n'.format(proj_matrix, ortho_matrix))
 signature, fingerprint = fingerprint_embedding.get_signature()
-print('\nSignature:\n{}\n \nEmbedded fingerprint:\n{}\n'.format(signature, fingerprint))
 
-# save the keys to file
-save_embedding_keys(proj_matrix, ortho_matrix, fingerprint, signature, fingerprint_fname)
-print(f'Data saved to {fingerprint_fname}')
+# save the keys used for the embedding to an HDF5 file
+save_embedding_keys(proj_matrix, ortho_matrix, fingerprint, signature, embedding_keys_fname)
+print(f'Embedding information saved to {embedding_keys_fname}')
 
-# print the extracted fingerprint
-show_encoded_signature(model)
+# extract the encoded fingerprint and save it to an HDF5 file
+extract_fingerprint(model, extracted_fingerprint_fname)
 
 # ---------------------------- Validate Training Accuracy and Save Model -----------------------------------------------
 
 # make predictions using the pruned model
+print("\nAssessing the performance on the model:")
 predictions_1 = model.predict(test_input)
 predictions_2 = np.argmax(predictions_1, axis=1)
 predictions_3 = kutils.to_categorical(predictions_2)
@@ -189,8 +196,6 @@ print("Error : ", error)
 
 # save model
 model.save(model_filepath)
-
-# save training history to file
-save_training_history(hist, training_history_fname)
+print(f'Model saved to {model_filepath}')
 
 
