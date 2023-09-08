@@ -54,12 +54,22 @@ test_input = test_input.astype('float32') / 255.0
 train_output = tf_utils.to_categorical(train_output)
 test_output = tf_utils.to_categorical(test_output)
 
-# load the pre-trained model
-model_path = os.path.join("result", "embed_model.keras")
-pretrained_model = tf.keras.models.load_model(model_path)
+# calculate the sizes for fine-tuning and evaluation of the model
+total_samples = len(test_input)
+train_size = int(0.8 * total_samples)  # 80% for training
+validation_size = total_samples - train_size  # 20% for model evaluation
 
-# print the model architecture
-#pretrained_model.summary()
+# split the training data
+training_input = test_input[:train_size]
+training_output = test_output[:train_size]
+
+# split the validation data
+validation_input = test_input[train_size:]
+validation_output = test_output[train_size:]
+
+# load the pre-trained model
+model_path = os.path.join("result", "embedded_model.keras")
+pretrained_model = tf.keras.models.load_model(model_path)
 
 # -------------------------------------------- Prune the Target Layer --------------------------------------------------
 
@@ -87,9 +97,6 @@ def apply_pruning_to_layer(layer):
 # create the pruned model
 pruned_model = tf.keras.models.clone_model(pretrained_model, clone_function=apply_pruning_to_layer)
 
-# print the model architecture
-#pruned_model.summary()
-
 # ---------------------------------------- Fine-Tune the Pruned Model --------------------------------------------------
 
 # compile the pruned model
@@ -104,11 +111,11 @@ callbacks = [tfmo.UpdatePruningStep(),
              tfmo.PruningSummaries(log_dir=logdir)]
 
 print("\nFine-tuning the pruned model:")
-pruned_model.fit(train_input,
-                 train_output,
+pruned_model.fit(training_input,
+                 training_output,
                  batch_size=batch_size,
                  epochs=nb_epoch,
-                 validation_split=0.15,
+                 validation_split=0.2,
                  callbacks=callbacks)
 
 # ----------------------------------- Check the Accuracy of the Pruning ------------------------------------------------
@@ -138,19 +145,16 @@ def print_model_weights_sparsity(model, fingerprinted_layer_name):
 stripped_pruned_model = tfmo.strip_pruning(pruned_model)
 print_model_weights_sparsity(stripped_pruned_model, fingerprinted_layer_name)
 
-# print the pruned model architecture
-#stripped_pruned_model.summary()
-
 # ---------------------------- Validate Training Accuracy and Save Model -----------------------------------------------
 
 # make predictions using the pruned model
 print("\nPerforming an evaluation on the pruned model:")
-predictions_1 = stripped_pruned_model.predict(test_input)
+predictions_1 = stripped_pruned_model.predict(validation_input)
 predictions_2 = np.argmax(predictions_1, axis=1)
 predictions_3 = tf_utils.np_utils.to_categorical(predictions_2, num_classes=10)
 
 # compute the accuracy of the pruned model
-accuracy = metrics.accuracy_score(test_output, predictions_3) * 100
+accuracy = metrics.accuracy_score(validation_output, predictions_3) * 100
 error = 100 - accuracy
 print("Accuracy : ", accuracy)
 print("Error : ", error)
