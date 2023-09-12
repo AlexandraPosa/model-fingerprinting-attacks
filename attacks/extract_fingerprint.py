@@ -16,8 +16,9 @@ from embed_fingerprint import FingerprintRegularizer
 # register the custom regularizer to load the models
 tf_utils.get_custom_objects()['FingerprintRegularizer'] = FingerprintRegularizer
 
-# add the parent directory of the script's location to the path
+# set paths
 result_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "result"))
+plot_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "images", "fingerprint_sparsity0.1.png"))
 
 # ---------------------------------------- Save and Load Functions -----------------------------------------------------
 
@@ -32,15 +33,15 @@ def load_from_hdf5(filename):
 # --------------------------------------------- Load Data --------------------------------------------------------------
 
 # load the fingerprint embedding information
-fingerprint_filename = os.path.join(result_path, "fingerprint_data.h5")
+fingerprint_filename = os.path.join(result_path, "embedding_keys.h5")
 proj_matrix, ortho_matrix, signature, fingerprint = load_from_hdf5(fingerprint_filename)
 
 # load the original model
-model_path = os.path.join(result_path, "embed_model.keras")
+model_path = os.path.join(result_path, "embedded_model.keras")
 original_model = tf.keras.models.load_model(model_path)
 
 # load the pruned model
-pruned_model_path = os.path.join(result_path, "pruned_model_sparsity0.01_epoch1.keras")
+pruned_model_path = os.path.join(result_path, "pruned_model_sparsity0.1_epoch2.keras")
 pruned_model = tf.keras.models.load_model(pruned_model_path)
 
 pruned_model.summary()
@@ -97,63 +98,36 @@ prun_signature, prun_fingerprint = extract_fingerprint(pruned_model,
                                                        pruned_model_layer_name,
                                                        proj_matrix, ortho_matrix)
 
-# Compute percentiles
+# compute percentiles
 diff_fingerprint = orig_fingerprint - prun_fingerprint
 percentiles = [25, 50, 75]
 quantiles = np.percentile(diff_fingerprint, percentiles)
 
+# print percentiles
 for p, q in zip(percentiles, quantiles):
     print(f"{p}th percentile: {q}")
 
-# use element-wise comparison to find differences
-absolute_differences = np.abs(orig_fingerprint - prun_fingerprint)
+# use the Euclidean distance to find differences
+euclidean_distance = np.linalg.norm(orig_fingerprint - prun_fingerprint)
 
-# subtract the 50th percentile from the 75th percentile
-threshold = quantiles[2] - quantiles[1]
-
-# count the number of values that exceed the threshold
-count_exceeding_threshold = np.count_nonzero(absolute_differences > threshold)
-
-# Print the count
-print("Number of values exceeding the threshold:", count_exceeding_threshold)
+# print the result
+print("Euclidean Distance:", euclidean_distance)
 
 # ----------------------------- Visualizing Differences in Fingerprint Distributions -----------------------------------
 
-# Calculate the difference fingerprint
-diff_fingerprint = orig_fingerprint - prun_fingerprint
+# plot the histograms of the original and pruned signatures
+plt.hist(np.squeeze(orig_signature), bins=50, alpha=0.6, label='Non-Pruned Signature', color='orange')
+plt.hist(np.squeeze(prun_signature), bins=50, alpha=0.5, label='Pruned Signature', color='cornflowerblue')
+plt.xlabel('Extracted Fingerprint Signature')
+plt.ylabel('Frequency')
+plt.title('Embedded Layer Sparsity Level: 10%')
+plt.legend(loc='upper center')
 
-# Create a figure with three subplots
-fig, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(18, 6))
+# show the figure
+#plt.show()
 
-# Plot the histogram of the differences
-ax1.hist(np.squeeze(diff_fingerprint), bins=50, color='blue')
-ax1.set_xlabel('Difference')
-ax1.set_ylabel('Frequency')
-ax1.set_title('Difference Between Original and Pruned Fingerprint')
-
-# Plot the histograms of the original and pruned fingerprints
-ax2.hist(np.squeeze(orig_fingerprint), bins=50, alpha=0.5, label='Original Fingerprint', color='blue')
-ax2.hist(np.squeeze(prun_fingerprint), bins=50, alpha=0.5, label='Pruned Fingerprint', color='red')
-ax2.set_xlabel('Value')
-ax2.set_ylabel('Frequency')
-ax2.set_title('Distribution of Fingerprint Values')
-ax2.legend(loc='upper right')
-
-# Plot the histograms of the original and pruned signatures
-ax3.hist(np.squeeze(orig_signature), bins=50, alpha=0.5, label='Original Signature', color='green')
-ax3.hist(np.squeeze(prun_signature), bins=50, alpha=0.5, label='Pruned Signature', color='orange')
-ax3.set_xlabel('Value')
-ax3.set_ylabel('Frequency')
-ax3.set_title('Distribution of Signature Values')
-ax3.legend(loc='upper right')
-
-# Show the figure with all three subplots
-plt.tight_layout()
-plt.show()
-
-# save plots to file
-plot_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "images", "fingerprint_plots.png"))
-fig.savefig(plot_path, dpi=300, bbox_inches='tight')
+# save the plot to file
+plt.savefig(plot_path, dpi=300, bbox_inches='tight')
 
 
 
