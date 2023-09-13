@@ -18,7 +18,7 @@ tf_utils.get_custom_objects()['FingerprintRegularizer'] = FingerprintRegularizer
 
 # set paths
 result_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "result"))
-plot_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "images", "fingerprint_sparsity0.1.png"))
+plot_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "images", "extract_fingerprint.png"))
 
 # ---------------------------------------- Save and Load Functions -----------------------------------------------------
 
@@ -34,17 +34,13 @@ def load_from_hdf5(filename):
 
 # load the fingerprint embedding information
 fingerprint_filename = os.path.join(result_path, "embedding_keys.h5")
-proj_matrix, ortho_matrix, signature, fingerprint = load_from_hdf5(fingerprint_filename)
+proj_matrix, ortho_matrix, embed_signature, embed_fingerprint = load_from_hdf5(fingerprint_filename)
 
 # load the original model
 model_path = os.path.join(result_path, "embedded_model.keras")
 original_model = tf.keras.models.load_model(model_path)
 
-# load the pruned model
-pruned_model_path = os.path.join(result_path, "pruned_model_sparsity0.1_epoch2.keras")
-pruned_model = tf.keras.models.load_model(pruned_model_path)
-
-pruned_model.summary()
+original_model.summary()
 
 # ---------------------------------- Function: Find Embedded Layer -----------------------------------------------------
 
@@ -87,19 +83,12 @@ def extract_fingerprint(model, layer_name, proj_matrix, ortho_matrix):
 # extract the fingerprint and signature from the original model
 original_model_layer_name = find_fingerprinted_layer(original_model)
 
-orig_signature, orig_fingerprint = extract_fingerprint(original_model,
+extr_signature, extr_fingerprint = extract_fingerprint(original_model,
                                                        original_model_layer_name,
                                                        proj_matrix, ortho_matrix)
 
-# extract the fingerprint and signature from the pruned model
-pruned_model_layer_name = find_fingerprinted_layer(pruned_model)
-
-prun_signature, prun_fingerprint = extract_fingerprint(pruned_model,
-                                                       pruned_model_layer_name,
-                                                       proj_matrix, ortho_matrix)
-
 # compute percentiles
-diff_fingerprint = orig_fingerprint - prun_fingerprint
+diff_fingerprint = extr_fingerprint - embed_fingerprint
 percentiles = [25, 50, 75]
 quantiles = np.percentile(diff_fingerprint, percentiles)
 
@@ -108,7 +97,7 @@ for p, q in zip(percentiles, quantiles):
     print(f"{p}th percentile: {q}")
 
 # use the Euclidean distance to find differences
-euclidean_distance = np.linalg.norm(orig_fingerprint - prun_fingerprint)
+euclidean_distance = np.linalg.norm(extr_fingerprint - embed_fingerprint)
 
 # print the result
 print("Euclidean Distance:", euclidean_distance)
@@ -116,15 +105,15 @@ print("Euclidean Distance:", euclidean_distance)
 # ----------------------------- Visualizing Differences in Fingerprint Distributions -----------------------------------
 
 # plot the histograms of the original and pruned signatures
-plt.hist(np.squeeze(orig_signature), bins=50, alpha=0.6, label='Non-Pruned Signature', color='orange')
-plt.hist(np.squeeze(prun_signature), bins=50, alpha=0.5, label='Pruned Signature', color='cornflowerblue')
-plt.xlabel('Extracted Fingerprint Signature')
+plt.hist(np.squeeze(embed_signature), bins=40, alpha=0.5, label='Embedded Values', color='gray')
+plt.hist(np.squeeze(extr_signature), bins=40, alpha=0.5, label='Extracted Values', color='orange')
+plt.xlabel('Fingerprint Signature')
 plt.ylabel('Frequency')
-plt.title('Embedded Layer Sparsity Level: 10%')
+plt.title(' ')
 plt.legend(loc='upper center')
 
 # show the figure
-#plt.show()
+plt.show()
 
 # save the plot to file
 plt.savefig(plot_path, dpi=300, bbox_inches='tight')
