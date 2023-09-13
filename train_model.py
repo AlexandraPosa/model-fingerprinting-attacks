@@ -24,7 +24,7 @@ from embed_fingerprint import extract_fingerprint
 # ------------------------------------- Initialization and Configuration -----------------------------------------------
 
 # set seed
-seed_value = 0
+seed_value = 2
 random.seed(seed_value)
 np.random.seed(seed_value)
 tf.random.set_seed(seed_value)
@@ -91,12 +91,12 @@ lr_schedule = [60, 120, 160]
 
 def schedule(epoch_idx):
     if (epoch_idx + 1) < lr_schedule[0]:
-        return 0.05
+        return 0.1
     elif (epoch_idx + 1) < lr_schedule[1]:
-        return 0.01
+        return 0.02
     elif (epoch_idx + 1) < lr_schedule[2]:
-        return 0.002
-    return 0.0004
+        return 0.004
+    return 0.0008
 
 # ------------------------------- Data Preprocessing and Augmentation --------------------------------------------------
 
@@ -144,7 +144,7 @@ model.summary()
 
 # model compilation
 model.compile(loss="categorical_crossentropy",
-              optimizer=SGD(lr=0.05, momentum=0.9, nesterov=True),
+              optimizer=SGD(lr=0.1, momentum=0.85, nesterov=True),
               metrics=["accuracy"])
 
 print("Finished compiling")
