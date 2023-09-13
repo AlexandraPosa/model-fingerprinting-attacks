@@ -144,7 +144,7 @@ model.summary()
 
 # model compilation
 model.compile(loss="categorical_crossentropy",
-              optimizer=SGD(lr=0.1, momentum=0.85, nesterov=True),
+              optimizer=SGD(lr=0.1, momentum=0.87, nesterov=True),
               metrics=["accuracy"])
 
 print("Finished compiling")
