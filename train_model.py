@@ -86,12 +86,12 @@ N = train_settings['N']
 k = train_settings['k']
 target_blk_id = train_settings['target_blk_id']
 
-# set learning rate decay ratio to 0.2
+# set the learning rate scheduler
 lr_schedule = [60, 120, 160]
 
 def schedule(epoch_idx):
     if (epoch_idx + 1) < lr_schedule[0]:
-        return 0.1
+        return 0.09
     elif (epoch_idx + 1) < lr_schedule[1]:
         return 0.02
     elif (epoch_idx + 1) < lr_schedule[2]:
@@ -144,7 +144,7 @@ model.summary()
 
 # model compilation
 model.compile(loss="categorical_crossentropy",
-              optimizer=SGD(lr=0.1, momentum=0.87, nesterov=True),
+              optimizer=SGD(lr=0.09, momentum=0.9, nesterov=True),
               metrics=["accuracy"])
 
 print("Finished compiling")
