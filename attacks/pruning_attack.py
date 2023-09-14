@@ -68,7 +68,7 @@ validation_input = test_input[train_size:]
 validation_output = test_output[train_size:]
 
 # load the pre-trained model
-model_path = os.path.join("result_09", "embedded_model.keras")
+model_path = os.path.join("result", "embedded_model.keras")
 pretrained_model = tf.keras.models.load_model(model_path)
 
 # -------------------------------------------- Prune the Target Layer --------------------------------------------------
@@ -149,7 +149,7 @@ print_model_weights_sparsity(stripped_pruned_model, fingerprinted_layer_name)
 
 # make predictions using the pruned model
 print("\nPerforming an evaluation on the pruned model:")
-predictions_1 = pretrained_model.predict(validation_input)
+predictions_1 = stripped_pruned_model.predict(validation_input)
 predictions_2 = np.argmax(predictions_1, axis=1)
 predictions_3 = tf_utils.np_utils.to_categorical(predictions_2, num_classes=10)
 
