@@ -35,18 +35,22 @@ settings_json_fname = sys.argv[1]
 train_settings = json.load(open(settings_json_fname))
 
 # set paths
-result_path = './result'
-os.makedirs(result_path) if not os.path.isdir(result_path) else None
+if train_settings['embed_flag'] == True:
+    result_path = './result'
+    model_filename = 'embedded_model.keras'
+    fingerprint_filename = 'extracted_fingerprint.h5'
+else:
+    result_path = './result_non'
+    model_filename = 'non_embedded_model.keras'
+    fingerprint_filename = 'non_extracted_fingerprint.h5'
 
-extracted_fingerprint_fname = os.path.join(result_path, 'extracted_fingerprint.h5')
-embedding_keys_fname = os.path.join(result_path, 'embedding_keys.h5')
+os.makedirs(result_path) if not os.path.isdir(result_path) else None
+extracted_fingerprint_fname = os.path.join(result_path, fingerprint_filename)
+model_filepath = os.path.join(result_path, model_filename)
 
 training_history_fname = os.path.join(result_path, 'model_training_history.h5')
 model_checkpoint_fname = os.path.join(result_path, 'model_checkpoint.h5')
-
-model_filepath = os.path.join(result_path, 'embedded_model.keras') \
-    if train_settings['embed_flag'] == True \
-    else os.path.join(result_path, 'non_embedded_model.keras')
+embedding_keys_fname = os.path.join(result_path, 'embedding_keys.h5')
 
 # ---------------------------------------- Save and Load Functions -----------------------------------------------------
 
