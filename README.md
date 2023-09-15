@@ -31,7 +31,7 @@ python train_model.py config/train_non.json
 Compare the fingerprints from the embedded and the non-embedded model:
 
 ```sh
-python utility/extract_embedded_fingerprint.py 
+python utility/check_embedded_fingerprint.py 
 ```
 
 Visualising the distribution of the fingerprint extraction:
