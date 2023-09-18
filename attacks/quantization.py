@@ -91,8 +91,6 @@ for layer in quantized_model.layers:
         if weight.dtype != 'float32':
             print(f"Layer {layer.name} has weights with data type {weight.dtype}")
 
-quantized_model.summary()
-
 # ----------------------------------------- Quantized Model Evaluation -------------------------------------------------
 
 _, baseline_model_accuracy = pretrained_model.evaluate(validation_input,
