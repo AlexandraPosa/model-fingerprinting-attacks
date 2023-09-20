@@ -1,4 +1,5 @@
-
+# Fine-tune the model by applying the quantization aware training API
+# to test the resilience of the embedded fingerprint.
 
 # ------------------------------------- Import Libraries and Modules ---------------------------------------------------
 import os
@@ -69,7 +70,7 @@ validation_output = test_output[train_size:]
 
 # ---------------------------------------- Quantization Aware Training -------------------------------------------------
 
-# quantization aware
+# create a quantization aware model
 quantized_model = quantize_model(pretrained_model)
 
 # `quantize_model` requires a recompile.
@@ -81,18 +82,18 @@ quantized_model.summary()
 print("\nPerforming quantization aware training:")
 quantized_model.fit(training_input,
                     training_output,
-                    batch_size=batch_size,
-                    epochs=nb_epoch,
+                    batch_size=500,
+                    epochs=1,
                     validation_split=0.2)
 
-# check if weights are int8 instead of float32
+# check the type of the quantized weights
 for layer in quantized_model.layers:
     for weight in layer.weights:
         if weight.dtype != 'float32':
             print(f"Layer {layer.name} has weights with data type {weight.dtype}")
 
-# ----------------------------------------- Quantized Model Evaluation -------------------------------------------------
 
+# check quantized model accuracy
 _, baseline_model_accuracy = pretrained_model.evaluate(validation_input,
                                                        validation_output,
                                                        verbose=0)
@@ -101,6 +102,62 @@ _, quantized_model_accuracy = quantized_model.evaluate(validation_input,
                                                        validation_output,
                                                        verbose=0)
 
-print('Baseline test accuracy:', baseline_model_accuracy)
-print('Quantized test accuracy:', quantized_model_accuracy)
+print('Baseline test accuracy:', baseline_model_accuracy * 100)
+print('Quantized test accuracy:', quantized_model_accuracy * 100)
+
+# -------------------------------------- TF Lite Model Evaluation ------------------------------------------------------
+
+# create quantized model for TFLite backend
+converter = tf.lite.TFLiteConverter.from_keras_model(quantized_model)
+converter.optimizations = [tf.lite.Optimize.DEFAULT]
+quantized_tflite_model = converter.convert()
+
+# load the TFLite model
+interpreter = tf.lite.Interpreter(model_content=quantized_tflite_model)
+interpreter.allocate_tensors()
+
+# check the data type of each tensor in the model
+for tensor_details in interpreter.get_tensor_details():
+    tensor_name = tensor_details["name"]
+    tensor_dtype = tensor_details["dtype"]
+    print(f"Tensor {tensor_name} has dtype {tensor_dtype}.")
+
+def evaluate_model(interpreter):
+  input_index = interpreter.get_input_details()[0]["index"]
+  output_index = interpreter.get_output_details()[0]["index"]
+
+  # Run predictions on every image in the "test" dataset.
+  prediction_digits = []
+  for i, test_image in enumerate(validation_input):
+    if i % 1000 == 0:
+      print('Evaluated on {n} results so far.'.format(n=i))
+    # Pre-processing: add batch dimension and convert to float32 to match with
+    # the model's input data format.
+    test_image = np.expand_dims(test_image, axis=0).astype(np.float32)
+    interpreter.set_tensor(input_index, test_image)
+
+    # Run inference.
+    interpreter.invoke()
+
+    # Post-processing: remove batch dimension and find the digit with highest
+    # probability.
+    output = interpreter.tensor(output_index)
+    digit = np.argmax(output()[0])
+    prediction_digits.append(digit)
+
+  print('\n')
+  # Compare prediction results with ground truth labels to calculate accuracy.
+  prediction_digits = np.array(prediction_digits)
+  accuracy = (prediction_digits == validation_output).mean()
+  return accuracy
+
+test_accuracy = evaluate_model(interpreter)
+
+print('Quant TFLite test_accuracy:', test_accuracy)
+print('Quant TF test accuracy:', quantized_model_accuracy)
+
+
+
+
+
 
