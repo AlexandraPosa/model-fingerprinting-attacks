@@ -41,8 +41,9 @@ fine_tune_settings = json.load(open(config_fname))
 # -------------------------------------------- Load and Prepare Data ---------------------------------------------------
 
 # read parameters
-batch_size = fine_tune_settings['batch_size']
 nb_epoch = fine_tune_settings['epoch']
+batch_size = fine_tune_settings['batch_size']
+validation_split = fine_tune_settings['validation_split']
 dataset = cifar10 if fine_tune_settings['dataset'] == 'cifar10' else None
 if dataset is None:
     print('not supported dataset "{}"'.format(fine_tune_settings['dataset']))
@@ -86,15 +87,14 @@ quant_aware_model.summary()
 print("\nPerforming quantization aware training:")
 quant_aware_model.fit(training_input,
                       training_output,
-                      batch_size=500,
-                      epochs=1,
-                      validation_split=0.2)
+                      epochs=nb_epoch,
+                      batch_size=batch_size,
+                      validation_split=validation_split)
 '''
 # check the data type of the quantized weights
 for layer in quant_aware_model.layers:
     for weight in layer.weights:
-        if weight.dtype != 'float32':
-            print(f"Layer {layer.name} has weights with data type {weight.dtype}")
+        print(f"Layer {layer.name} has weights with data type {weight.dtype}")
 '''
 
 # check quantized model accuracy
@@ -134,8 +134,6 @@ def evaluate_model(interpreter):
     # run predictions on every image in the validation dataset
     prediction_digits = []
     for i, test_image in enumerate(validation_input):
-        if i % 1000 == 0:
-          print('Evaluated on {n} results so far.'.format(n=i))
 
         # pre-processing: add batch dimension and convert to float32 to match with the model's input data format
         test_image = np.expand_dims(test_image, axis=0).astype(np.float32)

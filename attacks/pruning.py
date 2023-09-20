@@ -39,9 +39,10 @@ fine_tune_settings = json.load(open(config_fname))
 # -------------------------------------------- Load and Prepare Data ---------------------------------------------------
 
 # read parameters
-sparsity_level = fine_tune_settings['sparsity_level']
-batch_size = fine_tune_settings['batch_size']
 nb_epoch = fine_tune_settings['epoch']
+batch_size = fine_tune_settings['batch_size']
+sparsity_level = fine_tune_settings['sparsity_level']
+validation_split = fine_tune_settings['validation_split']
 dataset = cifar10 if fine_tune_settings['dataset'] == 'cifar10' else None
 if dataset is None:
     print('not supported dataset "{}"'.format(fine_tune_settings['dataset']))
@@ -115,7 +116,7 @@ pruned_model.fit(training_input,
                  training_output,
                  batch_size=batch_size,
                  epochs=nb_epoch,
-                 validation_split=0.2,
+                 validation_split=validation_split,
                  callbacks=callbacks)
 
 # ----------------------------------- Check the Accuracy of the Pruning ------------------------------------------------
