@@ -72,7 +72,7 @@ def extract_fingerprint(fingerprinted_layer_weights, proj_matrix, ortho_matrix):
 
     # flatten the weights
     weights_mean = fingerprinted_layer_weights.mean(axis=3)
-    weights_flat = weights_mean.reshape(weights_mean.size, 1)
+    weights_flat = weights_mean.reshape(weights_mean.size, )
 
     # extract the fingerprint
     extract_fingerprint = np.dot(proj_matrix, weights_flat)
@@ -92,15 +92,29 @@ fingerprinted_layer_name = find_fingerprinted_layer(original_model)
 tensor_details = interpreter.get_tensor_details()
 
 # find the tensor corresponding to the fingerprinted layer by name
-layer_tensor_detail = None
+fingerprinted_tensor_detail = None
 for tensor_detail in tensor_details:
-    if fingerprinted_layer_name in tensor_detail["name"] and tensor_detail["dtype"] == np.int8:
-        layer_tensor_detail = tensor_detail
+    # find the tensor associated with the fingerprinted layer in the original model and exclude tensors
+    # resulting from adding bias terms to the outputs of a previous layer before applying activation functions
+    if fingerprinted_layer_name in tensor_detail["name"] and 'BiasAdd' not in tensor_detail["name"]:
+        fingerprinted_tensor_detail = tensor_detail
         break
 
 # retrieve the weights of the fingerprinted layer
-if layer_tensor_detail is not None:
-    fingerprinted_layer_weights = interpreter.get_tensor(layer_tensor_detail["index"])
+if fingerprinted_tensor_detail is not None:
+
+    # access the quantized tensor data
+    quantized_data = interpreter.get_tensor(fingerprinted_tensor_detail["index"])     # ndarray (64, 3, 3, 64)
+
+    # access the quantization parameters
+    scales = fingerprinted_tensor_detail['quantization_parameters']['scales']
+    zero_points = fingerprinted_tensor_detail['quantization_parameters']['zero_points']
+
+    # dequantize the tensor data to obtain the original weights
+    dequantized_data = (quantized_data - zero_points) * scales
+
+    # reshape the tensor to match the weights of the original model: (3, 3, 64, 64)
+    fingerprinted_layer_weights = np.transpose(dequantized_data, (1, 2, 3, 0))
 else:
     print(f"Layer '{fingerprinted_layer_name}' not found in the model.")
 
@@ -127,26 +141,15 @@ print("Euclidean Distance:", euclidean_distance)
 # ----------------------------- Visualizing Differences in Fingerprint Distributions -----------------------------------
 
 # plot the histograms of the original and pruned signatures
-plt.hist(np.squeeze(original_signature), bins=50, alpha=0.5, label='Non-Quantized Values', color='gray')
-plt.hist(np.squeeze(quantized_signature), bins=50, alpha=0.5, label='Quantized Values', color='orange')
+plt.hist(original_signature, bins=50, alpha=0.5, label='Non-Quantized Values', color='gray')
+plt.hist(quantized_signature, bins=50, alpha=0.5, label='Quantized Values', color='orange')
 plt.xlabel('Fingerprint Signature')
 plt.ylabel('Frequency')
-plt.title('Quantization')
+plt.title(' ')
 plt.legend(loc='upper center')
 
 # show the figure
-plt.show()
+#plt.show()
 
 # save the plot to file
-#plt.savefig(plot_path, dpi=300, bbox_inches='tight')
-
-
-
-
-
-
-
-
-
-
-
+plt.savefig(plot_path, dpi=300, bbox_inches='tight')
