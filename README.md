@@ -1,11 +1,14 @@
-Embedding Fingerprints into Deep Neural Networks
+Securing Deep Neural Networks with Embedded Fingerprints
 ====
 Implementing concepts from two research papers, specifically "Embedding Watermarks into Deep Neural Networks" [1] 
 and "DeepMarks: A Secure Fingerprinting Framework for Digital Rights Management of Deep Learning Models" [2], 
 the code embeds a digital fingerprint into a wide residual network  throughout the training process. 
 The embedding is achieved by applying a parameter regularizer to the target layer.
 
-The code has been revised to accommodate TensorFlow version 2.12.0. 
+The project  incorporates attacks on the model aimed at assessing the robustness of the embedded fingerprint.
+These assessments include a pruning attack directed at the embedded layer and a model quantization procedure, 
+both of which are conducted during the fine-tuning process. The results of these evaluations are presented below.
+
 For further reference, you can access the original project through the following link: https://github.com/yu4u/dnn-watermark
 
 ## Requirements
@@ -16,37 +19,38 @@ pip install tensorflow-model-optimization==0.7.5
 ```
 
 ## Embedding Process
-Embed the fingerprint during the training phase of the host network:
+Embed the fingerprint during the training phase of the model:
 
 ```sh
-python train_model.py config/train_random.json
+python train_model.py config/train_embed.json
 ```
 
-Train the host network *without* embedding:
+Train an additional model *without* embedding:
 
 ```sh
 python train_model.py config/train_non.json 
 ```
 
-Compare the fingerprints from the embedded and the non-embedded model:
+Visualize the difference between the fingerprints of the embedded and the non-embedded model:
 
 ```sh
 python utility/check_embedded_fingerprint.py 
 ```
 
-Visualising the distribution of the fingerprint extraction:
+As can be observed, the distribution of the embedded fingerprint exhibits a strong similarity to that of a binary vector,
+while the non-embedded one is dispersed.
 
-![](images/fingerprint.png)
+![](images/embedded_fingerprint.png)
 
-## Attacks:
+## Pruning:
 
 Prune the fingerprinted layer while fine-tuning the model:
 
 ```sh
-python attacks/pruning_attack.py config/finetune.json
+python attacks/pruning.py config/pruning_settings.json
 ```
 
-Compare the fingerprints from the pruned and the original model:
+Visualize the difference between the fingerprints of the pruned and the original model:
 
 ```sh
 python utility/extract_pruned_fingerprint.py 
