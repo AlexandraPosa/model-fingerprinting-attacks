@@ -17,7 +17,7 @@ from embed_fingerprint import FingerprintRegularizer
 tf_utils.get_custom_objects()['FingerprintRegularizer'] = FingerprintRegularizer
 
 # set paths
-result_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "result_09"))
+result_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "result"))
 plot_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "images", "quantized_fingerprint.png"))
 
 # ---------------------------------------- Save and Load Functions -----------------------------------------------------
@@ -105,16 +105,15 @@ if fingerprinted_tensor_detail is not None:
 
     # access the quantized tensor data
     quantized_data = interpreter.get_tensor(fingerprinted_tensor_detail["index"])     # ndarray (64, 3, 3, 64)
+    quantized_data = np.transpose(quantized_data, (1, 2, 3, 0))                       # ndarray (3, 3, 64, 64)
 
     # access the quantization parameters
     scales = fingerprinted_tensor_detail['quantization_parameters']['scales']
     zero_points = fingerprinted_tensor_detail['quantization_parameters']['zero_points']
 
     # dequantize the tensor data to obtain the original weights
-    dequantized_data = (quantized_data - zero_points) * scales
+    fingerprinted_layer_weights = (quantized_data - zero_points) * scales
 
-    # reshape the tensor to match the weights of the original model: (3, 3, 64, 64)
-    fingerprinted_layer_weights = np.transpose(dequantized_data, (1, 2, 3, 0))
 else:
     print(f"Layer '{fingerprinted_layer_name}' not found in the model.")
 
@@ -122,21 +121,6 @@ else:
 quantized_signature, quantized_fingerprint = extract_fingerprint(fingerprinted_layer_weights,
                                                                  proj_matrix,
                                                                  ortho_matrix)
-
-# compute percentiles
-diff_fingerprint = original_fingerprint - quantized_fingerprint
-percentiles = [25, 50, 75]
-quantiles = np.percentile(diff_fingerprint, percentiles)
-
-# print percentiles
-for p, q in zip(percentiles, quantiles):
-    print(f"{p}th percentile: {q}")
-
-# use the Euclidean distance to find differences
-euclidean_distance = np.linalg.norm(original_fingerprint - quantized_fingerprint)
-
-# print the result
-print("Euclidean Distance:", euclidean_distance)
 
 # ----------------------------- Visualizing Differences in Fingerprint Distributions -----------------------------------
 
@@ -149,7 +133,7 @@ plt.title(' ')
 plt.legend(loc='upper center')
 
 # show the figure
-#plt.show()
+plt.show()
 
 # save the plot to file
 plt.savefig(plot_path, dpi=300, bbox_inches='tight')
