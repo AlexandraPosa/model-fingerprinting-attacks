@@ -2,5 +2,5 @@
   "dataset": "cifar10",
   "validation_split": 0.2,
   "batch_size": 64,
-  "epoch": 10
+  "epoch": 20
 }
