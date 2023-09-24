@@ -18,7 +18,7 @@ tf_utils.get_custom_objects()['FingerprintRegularizer'] = FingerprintRegularizer
 
 # set paths
 result_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "result"))
-plot_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "images", "fingerprint_sparsity0.1.png"))
+plot_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "images", "pruned_fingerprint.png"))
 
 # ---------------------------------------- Save and Load Functions -----------------------------------------------------
 
@@ -41,7 +41,7 @@ model_path = os.path.join(result_path, "embedded_model.keras")
 original_model = tf.keras.models.load_model(model_path)
 
 # load the pruned model
-pruned_model_path = os.path.join(result_path, "pruned_model_sparsity0.1_epoch2.keras")
+pruned_model_path = os.path.join(result_path, "pruned_model_sparsity0.3_epoch20.keras")
 pruned_model = tf.keras.models.load_model(pruned_model_path)
 
 pruned_model.summary()
@@ -98,21 +98,6 @@ prun_signature, prun_fingerprint = extract_fingerprint(pruned_model,
                                                        pruned_model_layer_name,
                                                        proj_matrix, ortho_matrix)
 
-# compute percentiles
-diff_fingerprint = orig_fingerprint - prun_fingerprint
-percentiles = [25, 50, 75]
-quantiles = np.percentile(diff_fingerprint, percentiles)
-
-# print percentiles
-for p, q in zip(percentiles, quantiles):
-    print(f"{p}th percentile: {q}")
-
-# use the Euclidean distance to find differences
-euclidean_distance = np.linalg.norm(orig_fingerprint - prun_fingerprint)
-
-# print the result
-print("Euclidean Distance:", euclidean_distance)
-
 # ----------------------------- Visualizing Differences in Fingerprint Distributions -----------------------------------
 
 # plot the histograms of the original and pruned signatures
@@ -120,7 +105,7 @@ plt.hist(np.squeeze(orig_signature), bins=50, alpha=0.5, label='Non-Pruned Value
 plt.hist(np.squeeze(prun_signature), bins=50, alpha=0.5, label='Pruned Values', color='orange')
 plt.xlabel('Fingerprint Signature')
 plt.ylabel('Frequency')
-plt.title('Sparsity Level: 10%')
+plt.title('Sparsity Level: 30%')
 plt.legend(loc='upper center')
 
 # show the figure
