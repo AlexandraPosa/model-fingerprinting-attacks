@@ -90,6 +90,7 @@ quant_aware_model.fit(training_input,
                       epochs=nb_epoch,
                       batch_size=batch_size,
                       validation_split=validation_split)
+
 '''
 # check the data type of the quantized weights
 for layer in quant_aware_model.layers:
@@ -119,6 +120,7 @@ quantized_tflite_model = converter.convert()
 # load the TFLite model
 interpreter = tf.lite.Interpreter(model_content=quantized_tflite_model)
 interpreter.allocate_tensors()
+
 '''
 # check the data type of each tensor in the model
 for tensor_details in interpreter.get_tensor_details():
@@ -126,6 +128,7 @@ for tensor_details in interpreter.get_tensor_details():
     tensor_dtype = tensor_details["dtype"]
     print(f"Tensor {tensor_name} has dtype {tensor_dtype}.")
 '''
+
 # TFLite model evaluation function
 def evaluate_model(interpreter):
     input_index = interpreter.get_input_details()[0]["index"]
