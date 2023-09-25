@@ -101,11 +101,10 @@ prun_signature, prun_fingerprint = extract_fingerprint(pruned_model,
 # ----------------------------- Visualizing Differences in Fingerprint Distributions -----------------------------------
 
 # plot the histograms of the original and pruned signatures
-plt.hist(np.squeeze(orig_signature), bins=30, alpha=0.5, label='Non-Pruned Values', color='gray')
+plt.hist(np.squeeze(orig_signature), bins=25, alpha=0.5, label='Non-Pruned Values', color='gray')
 plt.hist(np.squeeze(prun_signature), bins=50, alpha=0.5, label='Pruned Values', color='orange')
 plt.xlabel('Fingerprint Signature')
 plt.ylabel('Frequency')
-#plt.xticks(np.arange(-0.1, 1.2, 0.1))
 plt.title(' ')
 plt.legend(loc='upper center')
 
