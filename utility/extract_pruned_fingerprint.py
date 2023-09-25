@@ -17,7 +17,7 @@ from embed_fingerprint import FingerprintRegularizer
 tf_utils.get_custom_objects()['FingerprintRegularizer'] = FingerprintRegularizer
 
 # set paths
-result_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "result"))
+result_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "result_09"))
 plot_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "images", "pruned_fingerprint.png"))
 
 # ---------------------------------------- Save and Load Functions -----------------------------------------------------
@@ -41,7 +41,7 @@ model_path = os.path.join(result_path, "embedded_model.keras")
 original_model = tf.keras.models.load_model(model_path)
 
 # load the pruned model
-pruned_model_path = os.path.join(result_path, "pruned_model_sparsity0.3_epoch20.keras")
+pruned_model_path = os.path.join(result_path, "pruned_model_sparsity0.4_epoch2.keras")
 pruned_model = tf.keras.models.load_model(pruned_model_path)
 
 pruned_model.summary()
@@ -101,15 +101,16 @@ prun_signature, prun_fingerprint = extract_fingerprint(pruned_model,
 # ----------------------------- Visualizing Differences in Fingerprint Distributions -----------------------------------
 
 # plot the histograms of the original and pruned signatures
-plt.hist(np.squeeze(orig_signature), bins=50, alpha=0.5, label='Non-Pruned Values', color='gray')
+plt.hist(np.squeeze(orig_signature), bins=30, alpha=0.5, label='Non-Pruned Values', color='gray')
 plt.hist(np.squeeze(prun_signature), bins=50, alpha=0.5, label='Pruned Values', color='orange')
 plt.xlabel('Fingerprint Signature')
 plt.ylabel('Frequency')
-plt.title('Sparsity Level: 30%')
+#plt.xticks(np.arange(-0.1, 1.2, 0.1))
+plt.title(' ')
 plt.legend(loc='upper center')
 
 # show the figure
-plt.show()
+#plt.show()
 
 # save the plot to file
 plt.savefig(plot_path, dpi=300, bbox_inches='tight')

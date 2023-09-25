@@ -17,7 +17,7 @@ from embed_fingerprint import FingerprintRegularizer
 tf_utils.get_custom_objects()['FingerprintRegularizer'] = FingerprintRegularizer
 
 # set paths
-result_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "result"))
+result_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "result_09"))
 plot_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "images", "quantized_fingerprint.png"))
 
 # ---------------------------------------- Save and Load Functions -----------------------------------------------------
@@ -125,15 +125,15 @@ quantized_signature, quantized_fingerprint = extract_fingerprint(fingerprinted_l
 # ----------------------------- Visualizing Differences in Fingerprint Distributions -----------------------------------
 
 # plot the histograms of the original and pruned signatures
-plt.hist(original_signature, bins=50, alpha=0.5, label='Non-Quantized Values', color='gray')
-plt.hist(quantized_signature, bins=50, alpha=0.5, label='Quantized Values', color='orange')
+plt.hist(original_signature, bins=25, alpha=0.5, label='Non-Quantized Values', color='gray')
+plt.hist(quantized_signature, bins=30, alpha=0.5, label='Quantized Values', color='orange')
 plt.xlabel('Fingerprint Signature')
 plt.ylabel('Frequency')
 plt.title(' ')
 plt.legend(loc='upper center')
 
 # show the figure
-plt.show()
+#plt.show()
 
 # save the plot to file
 plt.savefig(plot_path, dpi=300, bbox_inches='tight')
