@@ -40,7 +40,7 @@ python utility/check_embedded_fingerprint.py
 As can be observed, the distribution of the embedded fingerprint exhibits a strong similarity to that of a binary vector,
 while the non-embedded one is dispersed.
 
-![](images/embedded_fingerprint.png)
+<img src="images/embedded_fingerprint.png" alt="Pruned Fingerprint" width="450" height="360">
 
 ## Pruning:
 
@@ -57,14 +57,34 @@ python utility/extract_pruned_fingerprint.py
 ```
 As depicted in the graphic below, 
 the fingerprint accuracy begins to decline when reaching a 40% sparsity level within the embedded layer, 
-at which point the fingerprint dispersion surpasses the 0.85 threshold required for code-vector extraction.
+at which point the fingerprint signature surpasses the 0.85 threshold required for code-vector extraction.
 
-<img src="images/pruned_fingerprint.png" alt="Pruned Fingerprint" width="500" height="360">
+<img src="images/pruned_fingerprint.png" alt="Pruned Fingerprint" width="450" height="360">
 
 While examining the model accuracy results, it becomes evident that the decrease in model accuracy occurs only 
 after exceeding a 70% sparsity level within the target layer.
 
-<img src="images/model_accuracy_sparsity_levels.png" alt="Pruned Fingerprint" width="500" height="360">
+<img src="images/model_accuracy_sparsity_levels.png" alt="Pruned Fingerprint" width="450" height="360">
+
+## Quantization:
+
+Convert the original model to a lower-precision (8-bit instead of 32-bit float) TFLite model:
+
+```sh
+python attacks/quantization.py config/quantization_settings.json
+```
+
+Visualize the difference between the fingerprints of the quantized and the original model:
+
+```sh
+python utility/extract_quantized_fingerprint.py 
+```
+
+As depicted in the picture below, 
+the extraction of the quantized fingerprint resulted in a distorted signature oscillating around 0.5, 
+failing to meet the accuracy requirements.
+
+<img src="images/quantized_fingerprint.png" alt="Pruned Fingerprint" width="450" height="360">
 
 ## License
 All code in this repository is protected by copyright law and is provided for specific usage outlined below. 
