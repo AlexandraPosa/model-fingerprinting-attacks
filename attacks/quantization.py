@@ -1,5 +1,6 @@
-# Fine-tune the model by applying the quantization aware training API
-# to test the resilience of the embedded fingerprint.
+# Fine-tune the model using the quantization aware training API, and subsequently,
+# use the quantization aware model to create an effectively quantized model for the TFLite backend.
+# This will allow for the assessment of the resilience of the embedded fingerprint.
 
 # ------------------------------------- Import Libraries and Modules ---------------------------------------------------
 import os
