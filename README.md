@@ -42,7 +42,7 @@ while the non-embedded one is dispersed.
 
 <img src="images/embedded_fingerprint.png" alt="Pruned Fingerprint" width="450" height="360">
 
-## Pruning:
+## Pruning
 
 Prune the fingerprinted layer while fine-tuning the model:
 
@@ -66,9 +66,9 @@ after exceeding a 70% sparsity level within the target layer.
 
 <img src="images/model_accuracy_sparsity_levels.png" alt="Pruned Fingerprint" width="450" height="360">
 
-## Quantization:
+## Quantization
 
-Convert the original model to a lower-precision (8-bit instead of 32-bit float) TFLite model:
+Optimize the original model by converting it into a full-integer TFLite model:
 
 ```sh
 python attacks/quantization.py config/quantization_settings.json
