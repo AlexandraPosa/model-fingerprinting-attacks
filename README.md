@@ -1,4 +1,4 @@
-Securing Deep Neural Networks with Embedded Fingerprints
+Fingerprinting: Enhancing Deep Neural Network Security
 ====
 Implementing concepts from two research papers, specifically "Embedding Watermarks into Deep Neural Networks" [1] 
 and "DeepMarks: A Secure Fingerprinting Framework for Digital Rights Management of Deep Learning Models" [2], 
