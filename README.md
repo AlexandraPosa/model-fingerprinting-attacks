@@ -55,18 +55,17 @@ Visualize the difference between the fingerprints of the pruned and the original
 ```sh
 python utility/extract_pruned_fingerprint.py 
 ```
+As depicted in the graphic below, 
+the fingerprint accuracy begins to decline when reaching a 40% sparsity level within the embedded layer, 
+at which point the fingerprint dispersion surpasses the 0.85 threshold required for code-vector extraction.
 
-Below are the results of the model accuracy for various sparsity levels within the target layer:
+<img src="images/pruned_fingerprint.png" alt="Pruned Fingerprint" width="500" height="360">
 
-![](images/model_accuracy_sparsity_levels.png)
+While examining the model accuracy results, it becomes evident that the decrease in model accuracy occurs only 
+after exceeding a 70% sparsity level within the target layer.
 
-<!--
-<div style="text-align: left;">
-    <img src="images_new/fingerprint_sparsity0.1.png" alt="Image 1" style="display: inline-block; margin: 0 auto; width: 400px; height: 300px;">
-    <img src="images_new/fingerprint_sparsity0.5.png" alt="Image 2" style="display: inline-block; margin: 0 auto; width: 400px; height: 300px;">
-    <img src="images_new/fingerprint_sparsity0.9.png" alt="Image 2" style="display: inline-block; margin: 0 auto; width: 400px; height: 300px;">
-</div>
--->
+<img src="images/model_accuracy_sparsity_levels.png" alt="Pruned Fingerprint" width="500" height="360">
+
 ## License
 All code in this repository is protected by copyright law and is provided for specific usage outlined below. 
 By using this code, you agree to adhere to the following guidelines:
