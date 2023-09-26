@@ -32,7 +32,7 @@ os.environ['PYTHONHASHSEED'] = str(seed_value)
 tf_utils.get_custom_objects()['FingerprintRegularizer'] = FingerprintRegularizer
 
 # load the pre-trained model
-model_path = os.path.join("result_09", "embedded_model.keras")
+model_path = os.path.join("result", "embedded_model.keras")
 pretrained_model = tf.keras.models.load_model(model_path)
 
 # set configuration
@@ -164,7 +164,7 @@ print('Quantized TFLite model accuracy:', test_accuracy * 100)
 print('Quantization aware model accuracy:', quant_aware_model_accuracy * 100)
 
 # save TFLite model to file
-tflite_model_path = os.path.join('result_09', 'quantized_model.tflite')
+tflite_model_path = os.path.join('result', 'quantized_model.tflite')
 with open(tflite_model_path, 'wb') as f:
     f.write(quantized_tflite_model)
 
