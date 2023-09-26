@@ -133,7 +133,7 @@ plt.title(' ')
 plt.legend(loc='upper center')
 
 # show the figure
-#plt.show()
+plt.show()
 
 # save the plot to file
-plt.savefig(plot_path, dpi=300, bbox_inches='tight')
+#plt.savefig(plot_path, dpi=300, bbox_inches='tight')
