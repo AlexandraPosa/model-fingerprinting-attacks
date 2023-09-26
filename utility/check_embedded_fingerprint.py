@@ -8,7 +8,7 @@ import h5py
 import matplotlib.pyplot as plt
 
 # set paths
-embed_model_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "result_09"))
+embed_model_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "result"))
 non_embed_model_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "result_non"))
 plot_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "images", "embedded_fingerprint.png"))
 
@@ -42,10 +42,10 @@ plt.title(' ')
 plt.legend(loc='upper center')
 
 # show the figure
-#plt.show()
+plt.show()
 
 # save the plot to file
-plt.savefig(plot_path, dpi=300, bbox_inches='tight')
+# plt.savefig(plot_path, dpi=300, bbox_inches='tight')
 
 
 

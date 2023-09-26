@@ -17,7 +17,7 @@ from embed_fingerprint import FingerprintRegularizer
 tf_utils.get_custom_objects()['FingerprintRegularizer'] = FingerprintRegularizer
 
 # set paths
-result_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "result_09"))
+result_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "result"))
 plot_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "images", "quantized_fingerprint.png"))
 
 # ---------------------------------------- Save and Load Functions -----------------------------------------------------
