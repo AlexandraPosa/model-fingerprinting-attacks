@@ -80,9 +80,9 @@ Visualize the difference between the fingerprints of the quantized and the origi
 python utility/extract_quantized_fingerprint.py 
 ```
 
-As depicted in the picture below, 
-the extraction of the quantized fingerprint resulted in a distorted signature oscillating around 0.5, 
-failing to meet the accuracy requirements.
+The quantized model achieves the same accuracy level as the original model during the fine-tuning process. 
+However, the extraction of the quantized fingerprint resulted in an unidentifiable code vector, 
+failing to meet the accuracy requirements, as depicted in the picture below.
 
 <img src="images/quantized_fingerprint.png" alt="Pruned Fingerprint" width="450" height="360">
 
