@@ -8,17 +8,17 @@ fingerprinting techniques contribute to maintaining the reliability and security
 which is crucial in our interconnected world.
 
 Taking inspiration from two seminal research papers, namely:
- + 'DeepMarks: A Secure Fingerprinting Framework for Digital Rights Management of Deep Learning Models' [1]
- + 'DeepAttest: An End-to-End Attestation Framework for Deep Neural Networks' [2]
+ + 'DeepAttest: An End-to-End Attestation Framework for Deep Neural Networks' [1] and
+ + 'DeepMarks: A Secure Fingerprinting Framework for Digital Rights Management of Deep Learning Models' [2],
 
-this project's core aim is to seamlessly integrate a digital fingerprint into a wide residual network during the training process.
+this project's core aim is to embed a digital fingerprint into a wide residual network during the training process.
 The embedding process is achieved by applying a parameter regularizer to the specific convolutional layer. 
 These parameter regularizers are mathematical tools that introduce supplementary constraints or penalties to the layer's weights. 
 This process fundamentally guides the neural network, 
 allowing it to adapt its parameters to seamlessly incorporate the additional fingerprint data while upholding the model's overall performance.
 
 In the context of wide residual networks, 
-it is imperative to observe that its residual blocks exhibit an enhanced width in comparison to standard residual networks. 
+it is noteworthy that its residual blocks exhibit an enhanced width in comparison to standard residual networks. 
 This enhanced width translates to a greater number of filters within each convolutional layer of a residual block. 
 The advantage of such widened blocks lies in their ability to capture a more extensive spectrum of features and intricate patterns within the data, 
 thereby enabling the network to acquire richer and more nuanced representations.
@@ -158,9 +158,9 @@ For questions, permissions, or inquiries related to this project, please open an
 Thank you for your cooperation and adherence to these guidelines.
 
 ## References
-[1] H. Chen, B. D. Rouhani, C. Fu, J. Zhao, and F. Koushanfar, "DeepMarks: A Secure Fingerprinting Framework for 
-    Digital Rights Management of Deep Learning Models", ICMR, 2019. \
-[2] H. Chen, C. Fu, B. D. Rouhani, J. Zhao, and F. Koushanfar, "DeepAttest: An End-to-End Attestation Framework for
+[1] H. Chen, C. Fu, B. D. Rouhani, J. Zhao, and F. Koushanfar, "DeepAttest: An End-to-End Attestation Framework for
     Deep Neural Networks", ISCA, 2019. \
+[2] H. Chen, B. D. Rouhani, C. Fu, J. Zhao, and F. Koushanfar, "DeepMarks: A Secure Fingerprinting Framework for 
+    Digital Rights Management of Deep Learning Models", ICMR, 2019. \
 [3] Y. Uchida, Y. Nagai, S. Sakazawa, and S. Satoh, "Embedding Watermarks into Deep Neural Networks", ICMR, 2017.
 
