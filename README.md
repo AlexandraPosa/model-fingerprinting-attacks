@@ -8,8 +8,8 @@ fingerprinting techniques contribute to maintaining the reliability and security
 which is crucial in our interconnected world.
 
 Taking inspiration from two seminal research papers, namely:
- + 'DeepMarks: A Secure Fingerprinting Framework for Digital Rights Management of Deep Learning Models' [1] and
- + 'DeepAttest: An End-to-End Attestation Framework for Deep Neural Networks' [2] ,
+ + 'DeepMarks: A Secure Fingerprinting Framework for Digital Rights Management of Deep Learning Models' [1]
+ + 'DeepAttest: An End-to-End Attestation Framework for Deep Neural Networks' [2]
 
 this project's core aim is to seamlessly integrate a digital fingerprint into a wide residual network during the training process.
 The embedding process is achieved by applying a parameter regularizer to the specific convolutional layer. 
