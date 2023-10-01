@@ -1,11 +1,22 @@
 Fingerprinting: Enhancing Deep Neural Network Security
 ====
- This code implementation draws inspiration from two seminal research papers:
- + 'Embedding Watermarks into Deep Neural Networks' [1] 
- + 'DeepMarks: A Secure Fingerprinting Framework for Digital Rights Management of Deep Learning Models' [2]
+Fingerprinting is the process of embedding unique markers within a model to verify its authenticity and integrity. 
+It not only facilitates the distinction between different users of the same model, enabling traceability and accountability, 
+it also plays a crucial role in ensuring the secure deployment of machine learning models through the establishment of device-specific fingerprints.
+As deep neural networks continue to find applications in sensitive domains, 
+fingerprinting techniques contribute to maintaining the reliability and security of AI systems, 
+which is crucial in our interconnected world.
 
-Its primary objective is to seamlessly integrate a digital fingerprint into a wide residual network during the training process.
-The embedding process itself is accomplished by applying a parameter regularizer to the targeted convolutional layer.
+Taking inspiration from two seminal research papers, namely:
+ + 'DeepMarks: A Secure Fingerprinting Framework for Digital Rights Management of Deep Learning Models' [1] and
+ + 'DeepAttest: An End-to-End Attestation Framework for Deep Neural Networks' [2] ,
+
+this project's core aim is to seamlessly integrate a digital fingerprint into a wide residual network during the training process.
+The embedding process is achieved by applying a parameter regularizer to the specific convolutional layer. 
+These parameter regularizers are mathematical tools that introduce supplementary constraints or penalties to the layer's weights. 
+This process fundamentally guides the neural network, 
+allowing it to adapt its parameters to seamlessly incorporate the additional fingerprint data while upholding the model's overall performance.
+
 In the context of wide residual networks, 
 it is imperative to observe that its residual blocks exhibit an enhanced width in comparison to standard residual networks. 
 This enhanced width translates to a greater number of filters within each convolutional layer of a residual block. 
@@ -18,9 +29,9 @@ Two primary assessment techniques have been employed:
 
 1. **Pruning Attack on the Embedded Layer**: 
 One of the pivotal evaluations entails a pruning attack strategically directed at the embedded layer within the deep neural network. 
-Pruning is a technique used to reduce the model's size by removing less significant connections or weights. 
+Pruning is a technique used to reduce the model's size by removing less significant weights. 
 By subjecting the embedded layer to a pruning attack, 
-the project seeks to assess whether the fingerprint remains intact and resilient even when the model undergoes compression or simplification. 
+the project seeks to assess whether the fingerprint remains intact and resilient even when the model undergoes compression. 
 This evaluation sheds light on the robustness of the embedded information under conditions where model size optimization is essential.
 
 2. **Model Quantization Procedure**: 
@@ -38,7 +49,7 @@ under real-world conditions and potential adversarial scenarios.
 The detailed results and findings from these robustness assessments are meticulously documented and presented below, 
 offering a comprehensive understanding of the security and stability of the embedded fingerprint within the deep learning model.
 
-For your future reference, you can access the code underpinning this project via the following link: https://github.com/yu4u/dnn-watermark
+For your future reference, you can access the code underpinning this project via the following link: https://github.com/yu4u/dnn-watermark [3]
 
 ## Requirements
 ```sh
@@ -147,6 +158,9 @@ For questions, permissions, or inquiries related to this project, please open an
 Thank you for your cooperation and adherence to these guidelines.
 
 ## References
-[1] Y. Uchida, Y. Nagai, S. Sakazawa, and S. Satoh, "Embedding Watermarks into Deep Neural Networks", ICMR, 2017. \
-[2] Huili Chen, Bita Darvish Rouhani, Cheng Fu, Jishen Zhao, and Farinaz Koushanfar, "DeepMarks: A Secure Fingerprinting 
-    Framework for Digital Rights Management of Deep Learning Models", ICMR, 2019
+[1] H. Chen, B. D. Rouhani, C. Fu, J. Zhao, and F. Koushanfar, "DeepMarks: A Secure Fingerprinting Framework for 
+    Digital Rights Management of Deep Learning Models", ICMR, 2019. \
+[2] H. Chen, C. Fu, B. D. Rouhani, J. Zhao, and F. Koushanfar, "DeepAttest: An End-to-End Attestation Framework for
+    Deep Neural Networks", ISCA, 2019. \
+[3] Y. Uchida, Y. Nagai, S. Sakazawa, and S. Satoh, "Embedding Watermarks into Deep Neural Networks", ICMR, 2017.
+
