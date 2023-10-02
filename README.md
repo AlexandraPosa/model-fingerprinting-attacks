@@ -140,6 +140,18 @@ the critical accuracy requirements for fingerprint extraction are not met.
 
 <img src="images/quantized_fingerprint.png" alt="Pruned Fingerprint" width="450" height="360">
 
+## Final Remarks
+
+The incorporation of digital fingerprints into deep neural networks represents a significant advancement in 
+enhancing model security and reliability. The robustness evaluations, which include pruning attacks and model quantization, 
+have provided valuable insights into the resilience of these embedded fingerprints under various adversarial scenarios. 
+These assessments underscore the crucial importance of maintaining fingerprint integrity in real-world applications. 
+Notably, during pruning attacks, the fingerprint exhibits remarkable resilience up to a certain sparsity threshold, 
+while the model experiences a delay in performance degradation. Conversely, in the context of model quantization, 
+the quantized model gradually regains its predictive capabilities but encounters challenges in fingerprint extraction. 
+These findings emphasize the necessity for further research and optimization to ensure the continued effectiveness 
+of embedded fingerprints in securing deep learning models.
+
 ## License
 All code in this repository is protected by copyright law and is provided for specific usage outlined below. 
 By using this code, you agree to adhere to the following guidelines:
