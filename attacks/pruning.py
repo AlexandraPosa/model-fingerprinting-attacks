@@ -10,7 +10,6 @@ import numpy as np
 import tensorflow as tf
 import keras.utils as tf_utils
 from keras.optimizers import SGD
-import sklearn.metrics as metrics
 from keras.datasets import cifar10
 import tensorflow_model_optimization as tfmot
 tfmo = tfmot.sparsity.keras
@@ -31,6 +30,10 @@ os.environ['PYTHONHASHSEED'] = str(seed_value)
 
 # register the custom regularizer to load the pre-trained model
 tf_utils.get_custom_objects()['FingerprintRegularizer'] = FingerprintRegularizer
+
+# load the pre-trained model
+model_path = os.path.join("result", "embedded_model.keras")
+base_model = tf.keras.models.load_model(model_path)
 
 # set configuration
 config_fname = sys.argv[1]
@@ -68,11 +71,12 @@ training_output = test_output[:train_size]
 validation_input = test_input[train_size:]
 validation_output = test_output[train_size:]
 
-# load the pre-trained model
-model_path = os.path.join("result", "embedded_model.keras")
-pretrained_model = tf.keras.models.load_model(model_path)
-
 # -------------------------------------------- Prune the Target Layer --------------------------------------------------
+
+# assessing the performance of the base model before pruning
+_, base_model_accuracy = base_model.evaluate(validation_input,
+                                             validation_output,
+                                             verbose=0)
 
 # find the layer where the fingerprint is embedded
 def find_fingerprinted_layer(model):
@@ -86,7 +90,7 @@ def find_fingerprinted_layer(model):
             continue
     return embedded_layer_name
 
-fingerprinted_layer_name = find_fingerprinted_layer(pretrained_model)
+fingerprinted_layer_name = find_fingerprinted_layer(base_model)
 
 # prune the target layer
 def apply_pruning_to_layer(layer):
@@ -96,7 +100,7 @@ def apply_pruning_to_layer(layer):
     return layer
 
 # create the pruned model
-pruned_model = tf.keras.models.clone_model(pretrained_model, clone_function=apply_pruning_to_layer)
+pruned_model = tf.keras.models.clone_model(base_model, clone_function=apply_pruning_to_layer)
 
 # ---------------------------------------- Fine-Tune the Pruned Model --------------------------------------------------
 
@@ -148,17 +152,16 @@ print_model_weights_sparsity(stripped_pruned_model, fingerprinted_layer_name)
 
 # ---------------------------- Validate Training Accuracy and Save Model -----------------------------------------------
 
-# make predictions using the pruned model
-print("\nPerforming an evaluation on the pruned model:")
-predictions_1 = stripped_pruned_model.predict(validation_input)
-predictions_2 = np.argmax(predictions_1, axis=1)
-predictions_3 = tf_utils.np_utils.to_categorical(predictions_2, num_classes=10)
+# compare the accuracy of the pruned model to the base model
+print("Assessing the performance of the model...")
 
-# compute the accuracy of the pruned model
-accuracy = metrics.accuracy_score(validation_output, predictions_3) * 100
-error = 100 - accuracy
-print("Accuracy : ", accuracy)
-print("Error : ", error)
+stripped_pruned_model.compile(loss="categorical_crossentropy", optimizer=sgd, metrics=["accuracy"])
+_, pruned_model_accuracy = stripped_pruned_model.evaluate(validation_input,
+                                                          validation_output,
+                                                          verbose=0)
+
+print("Base model accuracy: {:.2f}%".format(base_model_accuracy * 100))
+print("Pruned model accuracy: {:.2f}%".format(pruned_model_accuracy * 100))
 
 # save model
 pruned_model_fname = os.path.join('result', f'pruned_model_sparsity{sparsity_level}_epoch{nb_epoch}.keras')

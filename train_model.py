@@ -10,7 +10,6 @@ import json
 import os
 import h5py
 import tensorflow as tf
-import sklearn.metrics as metrics
 import wide_residual_network as wrn
 import keras.utils.np_utils as kutils
 from keras.datasets import cifar10
@@ -186,17 +185,12 @@ extract_fingerprint(model, extracted_fingerprint_fname)
 
 # ---------------------------- Validate Training Accuracy and Save Model -----------------------------------------------
 
-# make predictions using the pruned model
-print("\nAssessing the performance on the model:")
-predictions_1 = model.predict(test_input)
-predictions_2 = np.argmax(predictions_1, axis=1)
-predictions_3 = kutils.to_categorical(predictions_2)
-
-# compute the accuracy of the pruned model
-accuracy = metrics.accuracy_score(test_output, predictions_3) * 100
-error = 100 - accuracy
-print("Accuracy : ", accuracy)
-print("Error : ", error)
+# compute the accuracy of the model
+print("Assessing the performance of the model...")
+_, model_accuracy = model.evaluate(test_input,
+                                   test_output,
+                                   verbose=0)
+print("Model accuracy: {:.2f}%".format(model_accuracy * 100))
 
 # save model
 model.save(model_filepath)
