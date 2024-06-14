@@ -29,7 +29,6 @@ tf_utils.get_custom_objects()['FingerprintRegularizer'] = FingerprintRegularizer
 model_path = os.path.join("result", "embedded_model.keras")
 base_model = tf.keras.models.load_model(model_path)
 pruned_model = tf.keras.models.load_model(model_path)
-base_model.summary()
 
 # load data
 (train_input, train_output), (test_input, test_output) = cifar10.load_data()
@@ -69,16 +68,35 @@ def prune_model(model, prune_percentage):
 
     # Apply the mask to prune weights in the model
     start = 0
+    pruned_weights = []
     for i, layer in enumerate(model.layers):
         if isinstance(layer, (tf.keras.layers.Conv2D, tf.keras.layers.Dense)):
             weights, biases = layer.get_weights()
             shape = weights.shape
             size = weights.size
             flat_weights = weights.ravel()
+
+            # Prune the weights
             flat_weights[~prune_mask[start:start + size]] = 0
             weights = flat_weights.reshape(shape)
             layer.set_weights([weights, biases])
+
+            # Save pruned weights for overall sparsity calculation
+            pruned_weights.append(flat_weights)
+
+            # Calculate and print the sparsity level for this layer
+            num_pruned_weights = np.count_nonzero(flat_weights == 0)
+            sparsity = num_pruned_weights / size
+            print(f"Layer '{layer.name}': Sparsity: {sparsity:.2%}")
+
             start += size
+
+    # Concatenate all pruned weights into a single array
+    pruned_weights = np.concatenate(pruned_weights)
+
+    # Calculate overall sparsity level
+    overall_sparsity = np.count_nonzero(pruned_weights == 0) / total_weights
+    print(f"\nOverall model sparsity: {overall_sparsity:.2%}")
 
 prune_model(pruned_model, sparsity_level)
 
