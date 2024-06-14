@@ -54,7 +54,7 @@ For your future reference, you can access the code underpinning this project via
 ## Requirements
 ```sh
 pip install tensorflow==2.12.0 
-pip install scikit-learn==1.2.2 
+pip install matplotlib==3.8.0 
 pip install tensorflow-model-optimization==0.7.5
 ```
 
