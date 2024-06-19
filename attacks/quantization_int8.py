@@ -38,10 +38,20 @@ test_output = tf_utils.to_categorical(test_output)
 
 # ---------------------------------------- Quantization using Tensorflow Lite ------------------------------------------
 
+# Define a function to generate a representative dataset
+def representative_dataset_gen():
+    num_calibration_steps = 50
+    batch_size = 64
+    for i in range(num_calibration_steps):
+        # Select a random batch of images from the training set
+        batch_images = train_input[i * batch_size:(i + 1) * batch_size]
+        yield [batch_images]
+
 # convert the model to TensorFlow Lite format with float16 quantization
 converter = tf.lite.TFLiteConverter.from_keras_model(base_model)
 converter.optimizations = [tf.lite.Optimize.DEFAULT]
-converter.target_spec.supported_types = [tf.float16]
+converter.target_spec.supported_types = [tf.int8]
+converter.representative_dataset = representative_dataset_gen
 tflite_quant_model = converter.convert()
 
 # initialize the TensorFlow Lite interpreter
@@ -95,3 +105,9 @@ _, baseline_model_accuracy = base_model.evaluate(test_input,
 
 print('Baseline model accuracy:', baseline_model_accuracy * 100)
 print('Quantized TFLite model accuracy:', test_accuracy * 100)
+
+# save TFLite model to file
+tflite_model_path = os.path.join('result', 'quantized_model_int8.tflite')
+with open(tflite_model_path, 'wb') as f:
+    f.write(tflite_quant_model)
+
