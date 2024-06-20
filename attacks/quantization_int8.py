@@ -36,7 +36,7 @@ test_input = test_input.astype('float32') / 255.0
 train_output = tf_utils.to_categorical(train_output)
 test_output = tf_utils.to_categorical(test_output)
 
-# ---------------------------------------- Quantization using Tensorflow Lite ------------------------------------------
+# ----------------------------------- Quantization using Tensorflow Lite -----------------------------------------------
 
 # Define a function to generate a representative dataset
 def representative_dataset_gen():
@@ -66,7 +66,7 @@ for tensor_details in interpreter.get_tensor_details():
 
 # -------------------------------------- TF Lite Model Evaluation ------------------------------------------------------
 
-print("\nAssessing the performance of the model...")
+print("\nAssessing the performance of the model:")
 
 # TFLite model evaluation function
 def evaluate_model(interpreter):
@@ -103,11 +103,24 @@ _, baseline_model_accuracy = base_model.evaluate(test_input,
                                                  test_output,
                                                  verbose=0)
 
-print('Baseline model accuracy:', baseline_model_accuracy * 100)
-print('Quantized TFLite model accuracy:', test_accuracy * 100)
+print(f'Baseline model accuracy: {baseline_model_accuracy * 100:.2f}%')
+print(f'Quantized TFLite model accuracy: {test_accuracy * 100:.2f}%')
 
 # save TFLite model to file
 tflite_model_path = os.path.join('result', 'quantized_model_int8.tflite')
 with open(tflite_model_path, 'wb') as f:
     f.write(tflite_quant_model)
 
+# ------------------------------------- Compare Model Sizes ------------------------------------------------------------
+
+print("\nAnalyzing the effect of quantization on model size:")
+
+# get the size of the base model
+base_model_size = os.path.getsize(model_path)
+print(f"Base model size: {base_model_size / (1024 * 1024):.2f} MB")
+
+# get the size of the TFLite model
+tflite_model_size = os.path.getsize(tflite_model_path)
+print(f"TFLite model size: {tflite_model_size / (1024 * 1024):.2f} MB")
+
+print(f"Size reduction: {(1 - tflite_model_size / base_model_size) * 100:.2f}%")
