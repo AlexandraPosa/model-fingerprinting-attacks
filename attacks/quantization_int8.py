@@ -1,3 +1,6 @@
+# This script simulates an attack by quantizing the model, significantly reducing its size
+# by converting the weights of the convolutional layers from float32 to int8.
+
 # ------------------------------------- Import Libraries and Modules ---------------------------------------------------
 import os
 import sys
@@ -38,7 +41,7 @@ test_output = tf_utils.to_categorical(test_output)
 
 # ----------------------------------- Quantization using Tensorflow Lite -----------------------------------------------
 
-# Define a function to generate a representative dataset
+# define a function to generate a representative dataset
 def representative_dataset_gen():
     num_calibration_steps = 50
     batch_size = 64
@@ -99,9 +102,7 @@ def evaluate_model(interpreter):
 test_accuracy = evaluate_model(interpreter)
 
 # check base model accuracy
-_, baseline_model_accuracy = base_model.evaluate(test_input,
-                                                 test_output,
-                                                 verbose=0)
+_, baseline_model_accuracy = base_model.evaluate(test_input, test_output, verbose=0)
 
 print(f'Baseline model accuracy: {baseline_model_accuracy * 100:.2f}%')
 print(f'Quantized TFLite model accuracy: {test_accuracy * 100:.2f}%')

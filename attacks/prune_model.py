@@ -1,3 +1,6 @@
+# This script simulates an attack by pruning the least influential weights in the model.
+
+# ---------------------------------------- Import Libraries and Modules ------------------------------------------------
 import os
 import sys
 import numpy as np
@@ -19,8 +22,8 @@ np.random.seed(seed_value)
 tf.random.set_seed(seed_value)
 os.environ['PYTHONHASHSEED'] = str(seed_value)
 
-# set sparsity level for the target layer
-sparsity_level = 0.7
+# set the sparsity level for the model parameter pruning
+sparsity_level = 0.6
 
 # register the custom regularizer to load the trained model
 tf_utils.get_custom_objects()['FingerprintRegularizer'] = FingerprintRegularizer
@@ -40,7 +43,7 @@ test_output = tf_utils.to_categorical(test_output)
 # -------------------------------------------- Prune the Model ---------------------------------------------------------
 
 def prune_model(model, prune_percentage):
-    # Collect all weights from the model
+    # collect all weights from the model
     all_weights = []
     layer_shapes = []
     layer_sizes = []
@@ -51,22 +54,22 @@ def prune_model(model, prune_percentage):
             layer_shapes.append(weights.shape)
             layer_sizes.append(weights.size)
 
-    # Concatenate all weights into a single array
+    # concatenate all weights into a single array
     all_weights = np.concatenate(all_weights)
 
-    # Calculate the total number of weights and the number of weights to prune
+    # calculate the total number of weights and the number of weights to prune
     total_weights = all_weights.size
     num_weights_to_prune = int(prune_percentage * total_weights)
 
-    # Get the indices of the smallest weights to prune
+    # get the indices of the smallest weights to prune
     sorted_indices = np.argsort(np.abs(all_weights))
     prune_indices = sorted_indices[:num_weights_to_prune]
 
-    # Create a mask to zero out the smallest weights
+    # create a mask to zero out the smallest weights
     prune_mask = np.ones_like(all_weights, dtype=bool)
     prune_mask[prune_indices] = False
 
-    # Apply the mask to prune weights in the model
+    # apply the mask to prune weights in the model
     start = 0
     pruned_weights = []
     for i, layer in enumerate(model.layers):
@@ -76,25 +79,25 @@ def prune_model(model, prune_percentage):
             size = weights.size
             flat_weights = weights.ravel()
 
-            # Prune the weights
+            # prune the weights
             flat_weights[~prune_mask[start:start + size]] = 0
             weights = flat_weights.reshape(shape)
             layer.set_weights([weights, biases])
 
-            # Save pruned weights for overall sparsity calculation
+            # save pruned weights for overall sparsity calculation
             pruned_weights.append(flat_weights)
 
-            # Calculate and print the sparsity level for this layer
+            # calculate and print the sparsity level for this layer
             num_pruned_weights = np.count_nonzero(flat_weights == 0)
             sparsity = num_pruned_weights / size
             print(f"Layer '{layer.name}': Sparsity: {sparsity:.2%}")
 
             start += size
 
-    # Concatenate all pruned weights into a single array
+    # concatenate all pruned weights into a single array
     pruned_weights = np.concatenate(pruned_weights)
 
-    # Calculate overall sparsity level
+    # calculate overall sparsity level
     overall_sparsity = np.count_nonzero(pruned_weights == 0) / total_weights
     print(f"\nOverall model sparsity: {overall_sparsity:.2%}")
 
@@ -103,19 +106,14 @@ prune_model(pruned_model, sparsity_level)
 # ---------------------------- Validate Training Accuracy and Save Model -----------------------------------------------
 
 # compare the accuracy of the pruned model to the base model
-print("\nAssessing the performance of the model...")
-'''
-_, base_model_accuracy = base_model.evaluate(test_input,
-                                             test_output,
-                                             verbose=0)'''
+print("\nAssessing the performance of the model:")
 
-_, pruned_model_accuracy = pruned_model.evaluate(test_input,
-                                                 test_output,
-                                                 verbose=0)
+_, base_model_accuracy = base_model.evaluate(test_input, test_output, verbose=0)
+_, pruned_model_accuracy = pruned_model.evaluate(test_input, test_output, verbose=0)
 
-#print("Base model accuracy: {:.2f}%".format(base_model_accuracy * 100))
+print("Base model accuracy: {:.2f}%".format(base_model_accuracy * 100))
 print("Pruned model accuracy: {:.2f}%".format(pruned_model_accuracy * 100))
 
 # save model
 pruned_model_fname = os.path.join('result', f'pruned_model_sparsity{sparsity_level}.keras')
-#pruned_model.save(pruned_model_fname)
+pruned_model.save(pruned_model_fname)

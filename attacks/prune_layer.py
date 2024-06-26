@@ -1,3 +1,6 @@
+# This script targets the fingerprinted layer for pruning as part of a simulation attack.
+
+# ---------------------------------------- Import Libraries and Modules ------------------------------------------------
 import os
 import sys
 import numpy as np
@@ -110,19 +113,14 @@ print_model_weights_sparsity(pruned_model, fingerprinted_layer_name)
 # ---------------------------- Validate Training Accuracy and Save Model -----------------------------------------------
 
 # compare the accuracy of the pruned model to the base model
-print("\nAssessing the performance of the model...")
-'''
-_, base_model_accuracy = base_model.evaluate(test_input,
-                                             test_output,
-                                             verbose=0)'''
+print("\nAssessing the performance of the model:")
 
-_, pruned_model_accuracy = pruned_model.evaluate(test_input,
-                                                 test_output,
-                                                 verbose=0)
+_, base_model_accuracy = base_model.evaluate(test_input, test_output, verbose=0)
+_, pruned_model_accuracy = pruned_model.evaluate(test_input, test_output, verbose=0)
 
-#print("Base model accuracy: {:.2f}%".format(base_model_accuracy * 100))
+print("Base model accuracy: {:.2f}%".format(base_model_accuracy * 100))
 print("Pruned model accuracy: {:.2f}%".format(pruned_model_accuracy * 100))
 
 # save model
 pruned_model_fname = os.path.join('result', f'pruned_layer_sparsity{sparsity_level}.keras')
-#pruned_model.save(pruned_model_fname)
+pruned_model.save(pruned_model_fname)
