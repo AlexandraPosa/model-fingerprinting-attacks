@@ -18,7 +18,7 @@ from embed_fingerprint import FingerprintRegularizer
 # ------------------------------------------ Load and Prepare Data -----------------------------------------------------
 
 # set a seed for reproducibility
-seed_value = 0
+seed_value = 33
 np.random.seed(seed_value)
 tf.random.set_seed(seed_value)
 os.environ['PYTHONHASHSEED'] = str(seed_value)
@@ -31,22 +31,33 @@ model_path = os.path.join("result", "embedded_model.keras")
 base_model = tf.keras.models.load_model(model_path)
 pruned_model = tf.keras.models.load_model(model_path)
 
-# load data
+# load the CIFAR-10 dataset
 (train_input, train_output), (test_input, test_output) = cifar10.load_data()
+
+# normalize the data
 train_input = train_input.astype('float32') / 255.0
 test_input = test_input.astype('float32') / 255.0
+
+# convert labels to categorical format
 train_output = tf_utils.to_categorical(train_output)
 test_output = tf_utils.to_categorical(test_output)
 
 # -------------------------------------- Configuration and Initialization ----------------------------------------------
 
+# determine the batch size and number of samples
+batch_size = 64
+num_samples = len(train_input)
+
 # define the threshold for the lowest percentage of the activations
 sparsity_level = 10
 
-# define the names of the activation layers and the respective convolutional layers
+# specify the names of the activation layers and the respective convolutional layers
 activation_layer_names = ['activation', 'activation_1', 'activation_2', 'activation_3', 'activation_4', 'activation_5',
                           'activation_6']
 convolutional_layer_names = ['conv2d', 'conv2d_2', 'conv2d_3', 'conv2d_5', 'conv2d_6', 'conv2d_8', 'conv2d_9']
+
+# set the file path for saving the pruned model
+pruned_model_fname = os.path.join('result', f'activation_pruned_model_sparsity{sparsity_level}.keras')
 
 # ----------------------------------------- Activation Based Pruning ---------------------------------------------------
 
@@ -54,12 +65,25 @@ convolutional_layer_names = ['conv2d', 'conv2d_2', 'conv2d_3', 'conv2d_5', 'conv
 activation_layers = [pruned_model.get_layer(name).output for name in activation_layer_names]
 activation_model = Model(inputs=pruned_model.input, outputs=activation_layers)
 
-# predict activations using a subset of the training data
-activations = activation_model.predict(train_input[:len(train_input) // 10])
+# initialize a list to store mean activations per filter across batches
+mean_activations_per_layer = [[] for _ in activation_layer_names]
 
-def prune_filters(convolutional_layer, activation_layer):
+# iterate over the training data in batches
+for i in range(0, num_samples, batch_size):
+    batch_input = train_input[i:i + batch_size]
+    batch_activations = activation_model.predict(batch_input)
+
+    # collect mean activations for each layer in the batch
+    for layer_idx, activation in enumerate(batch_activations):
+        mean_activations = np.mean(np.abs(activation), axis=(0, 1, 2))
+        mean_activations_per_layer[layer_idx].append(mean_activations)
+
+# aggregate mean activations across all batches
+aggregate_activations = [np.mean(layer_activations, axis=0) for layer_activations in mean_activations_per_layer]
+
+def prune_filters(convolutional_layer, aggregate_activations):
     # calculate mean activation per filter
-    mean_activations = np.mean(activation_layer, axis=(0, 1, 2))
+    mean_activations = aggregate_activations
 
     # determine the threshold for the lowest percentage of the activations
     pruning_threshold = np.percentile(mean_activations, sparsity_level)
@@ -79,7 +103,7 @@ def prune_filters(convolutional_layer, activation_layer):
 # prune corresponding convolutional layers
 for i, conv_layer_name in enumerate(convolutional_layer_names):
     conv_layer = pruned_model.get_layer(conv_layer_name)
-    prune_filters(conv_layer, activations[i])
+    prune_filters(conv_layer, aggregate_activations[i])
 
 # -------------------------------------- Evaluating Model Performance --------------------------------------------------
 
@@ -91,3 +115,6 @@ _, pruned_model_accuracy = pruned_model.evaluate(test_input, test_output, verbos
 
 print("Base model accuracy: {:.2f}%".format(base_model_accuracy * 100))
 print("Pruned model accuracy: {:.2f}%".format(pruned_model_accuracy * 100))
+
+# save the pruned model
+pruned_model.save(pruned_model_fname)
