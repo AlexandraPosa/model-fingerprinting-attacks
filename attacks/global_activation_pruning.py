@@ -1,4 +1,5 @@
-# This script simulates an attack by pruning less active filters that contribute minimally to the outcome.
+# This script simulates an attack by pruning less active filters that contribute minimally to the outcome,
+# using a global threshold derived from the lowest percentage across all filters.
 
 # ---------------------------------------- Import Libraries and Modules ------------------------------------------------
 import os
@@ -124,11 +125,11 @@ for i, conv_layer_name in enumerate(convolutional_layer_names):
 # compare the accuracy of the pruned model to the base model
 print("\nAssessing the performance of the model:")
 
-#_, base_model_accuracy = base_model.evaluate(test_input, test_output, verbose=0)
+_, base_model_accuracy = base_model.evaluate(test_input, test_output, verbose=0)
 _, pruned_model_accuracy = pruned_model.evaluate(test_input, test_output, verbose=0)
 
-#print("Base model accuracy: {:.2f}%".format(base_model_accuracy * 100))
+print("Base model accuracy: {:.2f}%".format(base_model_accuracy * 100))
 print("Pruned model accuracy: {:.2f}%".format(pruned_model_accuracy * 100))
 
 # save the pruned model
-#pruned_model.save(pruned_model_fname)
+pruned_model.save(pruned_model_fname)
