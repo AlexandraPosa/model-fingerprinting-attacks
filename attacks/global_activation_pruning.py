@@ -43,10 +43,6 @@ test_input = test_input.astype('float32') / 255.0
 train_output = tf_utils.to_categorical(train_output)
 test_output = tf_utils.to_categorical(test_output)
 
-# reduce the size of the training data by half
-half_size = len(train_input) // 50
-train_input = train_input[:half_size]
-
 # -------------------------------------- Configuration and Initialization ----------------------------------------------
 
 # determine the batch size and number of samples
