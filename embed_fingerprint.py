@@ -5,10 +5,11 @@ import h5py
 
 class FingerprintRegularizer(Regularizer):
 
-    def __init__(self, strength, embed_dim, seed=0, apply_penalty=False):
+    def __init__(self, strength, embed_dim, num_zeros, seed=0, apply_penalty=False):
         self.seed = seed
         self.strength = strength
         self.embed_dim = embed_dim
+        self.num_zeros = num_zeros
         self.apply_penalty = apply_penalty
         self.signature = None
         self.fingerprint = None
@@ -21,9 +22,10 @@ class FingerprintRegularizer(Regularizer):
         # set a seed
         np.random.seed(self.seed)
 
-        # define the code vector
-        #self.signature = np.ones((self.embed_dim, 1))
-        self.signature = np.random.randint(0, 2, size=self.embed_dim)
+        # define the user-specific code vector
+        self.signature = np.ones(self.embed_dim, dtype=int)
+        zero_indices = np.random.choice(self.embed_dim, size=self.num_zeros, replace=False)
+        self.signature[zero_indices] = 0
         self.signature = self.signature.reshape(self.embed_dim, 1)
 
         # compute the linear mapping

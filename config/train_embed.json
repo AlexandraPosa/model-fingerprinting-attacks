@@ -5,7 +5,8 @@
   "batch_size": 64,
   "epoch": 200,
   "scale": 0.01,
-  "embed_dim": 256,
+  "embed_dim": 31,
+  "num_zeros": 6,
   "N": 1,
   "k": 4
 }

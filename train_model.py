@@ -35,7 +35,7 @@ train_settings = json.load(open(settings_json_fname))
 
 # set paths
 if train_settings['embed_flag'] == True:
-    result_path = './result'
+    result_path = './result_new'
     model_filename = 'embedded_model.keras'
     fingerprint_filename = 'extracted_fingerprint.h5'
 else:
@@ -83,6 +83,7 @@ else:
 batch_size = train_settings['batch_size']
 nb_epoch = train_settings['epoch']
 scale = train_settings['scale']
+num_zeros = train_settings['num_zeros']
 embed_dim = train_settings['embed_dim']
 embed_flag = train_settings['embed_flag']
 N = train_settings['N']
@@ -136,8 +137,8 @@ generator.fit(training_input, augment=True)
 # create model
 init_shape = (3, 32, 32) if K.image_data_format() == "channels_first" else (32, 32, 3)
 
-fingerprint_embedding = FingerprintRegularizer(strength=scale, embed_dim=embed_dim, seed=seed_value,
-                                               apply_penalty=embed_flag)
+fingerprint_embedding = FingerprintRegularizer(strength=scale, embed_dim=embed_dim, num_zeros=num_zeros,
+                                               seed=seed_value, apply_penalty=embed_flag)
 
 model = wrn.create_wide_residual_network(init_shape, nb_classes=nb_classes, N=N, k=k, dropout=0.00,
                                          custom_regularizer=fingerprint_embedding, target_blk_num=target_blk_id)
