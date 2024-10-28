@@ -77,7 +77,8 @@ class FingerprintRegularizer(Regularizer):
             'strength': self.strength,
             'embed_dim': self.embed_dim,
             'apply_penalty': self.apply_penalty,
-            'seed': self.seed
+            'seed': self.seed,
+            'num_zeros': self.num_zeros
         }
 
 
